@@ -21,8 +21,8 @@ W AA.00 1
 R AA.00 2
 ! Examples of fine tests. 
 G 1234
-! 14 used for F because due date is 14 days after start
-F 1234 "LEGITIMATE BOOK" 14
+! Change date on next line to be 14 days after date test is run
+F 1234 "LEGITIMATE BOOK" 2023-01-01
 G 1234
 ! Examples of edit tests
 EK AA.00 "EDITED LEGITIMATE BOOK" { NEWAUTHOR AARDVARK } SC { WORDS EDITED }
