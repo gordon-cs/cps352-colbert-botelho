@@ -1,4 +1,11 @@
-connect to project; 
+connect to project;
+/*
+ * file: createdb.sql
+ *
+ * Originally written by Russell C. Bjork
+ * Modified for CS352 Project by: Jake Colbert and Eddy Botelho (team 6)
+ *
+ */
 
 create variable today date;
 create variable fine_daily_rate_in_cents integer default 5;
@@ -68,14 +75,14 @@ create table Fine(
 create trigger last_book_trigger
 	after delete on Book
 	referencing old as o
-	for each row 
-	when ((select count(*) 
-			from book 
-			where call_number = o.call_number) 
+	for each row
+	when ((select count(*)
+			from book
+			where call_number = o.call_number)
 		= 0)
 		delete from Book_info
 			where call_number = o.call_number;
-			
+
 -- This trigger will prevent an attempt to renew a book that is overdue
 
 create trigger cant_renew_overdue_trigger
@@ -87,3 +94,25 @@ create trigger cant_renew_overdue_trigger
 		 set message_text = 'CANT_RENEW_OVERDUE';
 
 -- Code needed to create other triggers should be added here
+
+-- This trigger will prevent an attempt to checkout a book if the borrower
+--    already has the maximum number of books checked out
+create trigger book_limit_reached_trigger
+	before insert on Checked_out  -- should this be before insert on....?
+	referencing new as n
+	for each row
+	when ((SELECT count(*)
+		   FROM Checked_out
+		   WHERE borrower_id = n.borrower_id)
+		   >=               --books out greater than or equal to max_books_out?
+		   (SELECT max_books_out
+	       FROM Borrower join Category on Borrower.category_name =
+		   Category.category_name
+		   WHERE borrower_id = n.borrower_id))
+		signal sqlstate '79999'
+		set message_text = 'MAX_BOOKS_ALREADY_OUT';
+
+
+--ADD A TRIGGER TO ASSESS A FINE!!
+
+--DONT FORGET TO ADD TRIGGER TO DBDROP!!

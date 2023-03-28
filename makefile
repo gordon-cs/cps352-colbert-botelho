@@ -11,7 +11,7 @@ dosqlj:
 
 dojavac:
 	javac -classpath project.jar:$$CLASSPATH semesterproject/Database.java
-	
+
 dobind:
 	@echo Please enter password when prompted for it
 	cd semesterproject; java -cp ..:$$CLASSPATH Bind \
@@ -19,6 +19,5 @@ dobind:
 		-url jdbc:db2:project \
 		-user $(USERNAME) \
 		Database_SJProfile0.ser
-	
-	
-	
+
+
