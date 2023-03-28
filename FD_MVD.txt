@@ -1,0 +1,13 @@
+List of FDs and MVDs for Programming Project
+Jake Colbert and Eddy Botelho
+
+
+Functional Dependencies:
+
+call_number -> title, format, author, keyword
+
+
+
+Multi-Valued Dependencies:
+
+call_number ->> copy_number
