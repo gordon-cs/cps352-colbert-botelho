@@ -1,5 +1,13 @@
 connect to project;
 
+/*
+ * file: dropdb.sql
+ *
+ * Originally written by Russell C. Bjork
+ * Modified for CS352 Project by: Jake Colbert and Eddy Botelho (team 6)
+ *
+ */
+
 drop trigger last_book_trigger;
 drop trigger cant_renew_overdue_trigger;
 drop trigger book_limit_reached_trigger;

@@ -1,0 +1,6 @@
+#idk what these are, we can add them back if we need them later
+*.class
+*.ser
+
+#This is omitting the "pure java" compiled file
+*.java

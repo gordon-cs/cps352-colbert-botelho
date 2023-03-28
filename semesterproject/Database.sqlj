@@ -138,21 +138,24 @@ public class Database
      */
     public String getBorrowerName(String borrowerID) throws ErrorMessage
     {
-
+        String b_name = "test";
         try {
-
-            #sql { SELECT * FROM borrower WHERE borrower_id = :borrowerID };
+            #sql { SELECT *
+                   INTO :b_name
+                   FROM Borrower WHERE borrower_id = :borrowerID };
             #sql { commit };
 
         } catch(SQLException e) {
             rollback();
         	throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
         }
+
 // STUB (I implemented this--still learning what is going on...potentially wrong)
+
         if (borrowerID.equals("BAD")) {
             throw new ErrorMessage("Error message test getBorrowerName");
         }
-        return "??? name ???";
+        return b_name;
     }
 
     /** Check out a book.
@@ -174,7 +177,7 @@ public class Database
         //these lines get date due I think?
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DATE, 10);
-        Date dateDue = calendar.getTime().getTime();
+        Date dateDue = new Date(calendar.getTime().getTime());
 
         try {
             #sql {INSERT into Checked_out(
@@ -191,7 +194,7 @@ public class Database
         }
         System.out.println("Check out " + callNumber + " " +
             copyNumber + " to " + borrowerID);
-        return new Date(dateDue);
+        return dateDue;
     }
 
     /** Return a book.  If an overdue fine is incurred, it will be recorded
