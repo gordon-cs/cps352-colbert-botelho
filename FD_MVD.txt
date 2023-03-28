@@ -2,23 +2,35 @@ List of FDs and MVDs for Programming Project
 Jake Colbert and Eddy Botelho
 
 
-Functional Dependencies:
+-----:Functional Dependencies:-----
 
-call_number -> title, format, author
-call_number, copy_number -> barcode
+call_number -> title, format
+call_number, copy_number -> barcode                    (buc?)
+call_number, copy_number -> date_due, borrower_id
+barcode -> call_number, copy_number, title, format     (buc?)
 
-barcode -> call_number, copy_number, title, format
-borrower_id -> first_name, last_name
+borrower_id -> first_name, last_name, catagory_name
+borrower_id, title, date_due -> date_returned, amount
+
+catagory_name -> checkout_period, max_books_out
 
 
 
-Multi-Valued Dependencies:
+-----:Multi-Valued Dependencies:-----
 
-call_number ->> author_name
 call_number ->> copy_number
+call_number ->> author_name
 call_number ->> keyword
 
-keyword ->> call_number
+barcode ->> keyword
+barcode ->> author_name
 
 borrower_id ->> phone
-first_name, last_name ->> borrower_id
+
+(Note to self: MVDs like x ->> y are for when there is ONE x (e.g. one borrower)
+that can refer to multiple ys (e.g. phone numbers), not when there are MULTIPLE
+x (e.g. phone numbers) that refer to ONE y (borrower))
+
+(buc?) = barcode unique for each copy = I think so, additionally the schema
+diagram seems to confirm this because bar_code can be determined by
+call_number and copy_number together.
