@@ -4,10 +4,21 @@ Jake Colbert and Eddy Botelho
 
 Functional Dependencies:
 
-call_number -> title, format, author, keyword
+call_number -> title, format, author
+call_number, copy_number -> barcode
+
+barcode -> call_number, copy_number, title, format
+borrower_id -> first_name, last_name
 
 
 
 Multi-Valued Dependencies:
 
+call_number ->> author_name
 call_number ->> copy_number
+call_number ->> keyword
+
+keyword ->> call_number
+
+borrower_id ->> phone
+first_name, last_name ->> borrower_id
