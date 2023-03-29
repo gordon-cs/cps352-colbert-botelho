@@ -2,10 +2,10 @@
  * file: Database.sqlj
  *
  * Originally written by Russell C. Bjork
- * Modified for CS352 Project by:
+ * Modified for CS352 Project by: Jake Colbert and Eddy Botelho (team 6)
  *
  */
- 
+
 package semesterproject;
 
 import semesterproject.gui.ErrorMessage;
@@ -76,7 +76,7 @@ public class Database
                 DefaultContext context = new DefaultContext(connection);
                 DefaultContext.setDefaultContext(context);
                 connection.setAutoCommit(false);
-        		resetToday();   
+        		resetToday();
             }
         }
         catch(SQLException e)
@@ -99,7 +99,7 @@ public class Database
 	/* ************************************************************************
 	 * Method called to delete all existing entries in the database
 	 * ************************************************************************
-	 
+
 	 /** Delete all existing entries in the database
 	  */
 	public void startOver() throws ErrorMessage
@@ -131,16 +131,31 @@ public class Database
     /** Get the name of a borrower, given his/her ID
      *
      *  @param borrowerID the ID of the borrower.
-     *  @return this borrower's name     
+     *  @return this borrower's name
      *
      *  @exception an ErrorMessage is thrown with an appropriate message if
      *          the borrower does not exist
      */
     public String getBorrowerName(String borrowerID) throws ErrorMessage
     {
+        String b_name = "test";
+        try {
+            #sql { SELECT *
+                   INTO :b_name
+                   FROM Borrower WHERE borrower_id = :borrowerID };
+            #sql { commit };
+
+        } catch(SQLException e) {
+            rollback();
+        	throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        }
+
 // STUB
-if (borrowerID.equals("BAD")) throw new ErrorMessage("Error message test getBorrowerName");
-return "??? name ???";
+
+        if (borrowerID.equals("BAD")) {
+            throw new ErrorMessage("Error message test getBorrowerName");
+        }
+        return b_name;
     }
 
     /** Check out a book.
@@ -159,12 +174,27 @@ return "??? name ???";
                              short copyNumber) throws ErrorMessage
     {
 // STUB
-if (callNumber.equals("BAD")) throw new ErrorMessage("Error message test checkOutBook");
-System.out.println("Check out " + callNumber + " " +
-copyNumber + " to " + borrowerID);
-Calendar calendar = Calendar.getInstance();
-calendar.add(Calendar.DATE, 10);
-return new Date(calendar.getTime().getTime());
+        //these lines get date due I think?
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DATE, 10);
+        Date dateDue = new Date(calendar.getTime().getTime());
+
+        try {
+            #sql {INSERT into Checked_out(
+                call_number, copy_number, borrower_id, date_due)
+                values (:callNumber, :copyNumber, :borrowerID, :dateDue)};
+            #sql { commit };
+        } catch(SQLException e) {
+            rollback();
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        }
+
+        if (callNumber.equals("BAD")) {
+            throw new ErrorMessage("Error message test checkOutBook");
+        }
+        System.out.println("Check out " + callNumber + " " +
+            copyNumber + " to " + borrowerID);
+        return dateDue;
     }
 
     /** Return a book.  If an overdue fine is incurred, it will be recorded
@@ -187,11 +217,11 @@ System.out.println("Return " + callNumber + " " + copyNumber);
 // this uses the copyNumber to facilitate testing - a book with a copy number
 // greater than 10 is considered late that many days.
 int daysLate = (copyNumber > 10) ? copyNumber : 0;
-        
+
 // The following line should be incorporated into your code, to be executed
 // if the book is late (after calculating daysLate in the database, of course),
-// and before inserting a new row into the Fine table.   It uses the symbolic 
-// constant DAILY_FINE_RATE in class Fine - which gives the rate in cents, 
+// and before inserting a new row into the Fine table.   It uses the symbolic
+// constant DAILY_FINE_RATE in class Fine - which gives the rate in cents,
 // whereas the Fine table in the database holds the amount in dollars.
 
         BigDecimal fineAmount = new BigDecimal(Fine.DAILY_FINE_RATE * .01 * daysLate).
@@ -212,7 +242,7 @@ int daysLate = (copyNumber > 10) ? copyNumber : 0;
      *  @return the date on which the book will be due if renewed succssfully
      *
      *  @exception an ErrorMessage is thrown with an appropriate message if
-     *          the renewal fails for any reason.  
+     *          the renewal fails for any reason.
      */
     public Date renewBook(String callNumber, short copyNumber) throws ErrorMessage
     {
@@ -269,10 +299,10 @@ return new Date(calendar.getTime().getTime());
         {
             rollback();
         }
-        
+
         return count > 0;
     }
-                    
+
     /** Add a new book to the database.
      *
      *  @param callNumber the call number of the book to add
@@ -301,48 +331,48 @@ return new Date(calendar.getTime().getTime());
             if (title == null)
             {
                 // New copy of an existing book
-                
+
                 #sql { insert into Book(call_number, copy_number)
                         values (:callNumber,
-                                1 + (select max(copy_number) 
+                                1 + (select max(copy_number)
                                         from Book
                                         where call_number = :callNumber))
                      };
-                     
+
                 #sql { commit };
             }
             else
             {
                 // Totally new book
-                
+
                 #sql { insert into Book_info
                         values (:callNumber, :title, :format)
                      };
-                     
+
                 Iterator authorIterator = authors.iterator();
                 while (authorIterator.hasNext())
                 {
                     String author = (String) authorIterator.next();
-                    
+
                     #sql { insert into Book_author
                             values(:callNumber, :author)
                          };
                 }
-                
+
                 Iterator keywordIterator = keywords.iterator();
                 while (keywordIterator.hasNext())
                 {
                     String keyword = (String) keywordIterator.next();
-                
+
                     #sql { insert into Book_keyword
                             values(:callNumber, :keyword)
                          };
                 }
-                    
+
                 #sql { insert into Book(call_number, copy_number)
                         values (:callNumber, 1)
                      };
-                
+
                 #sql { commit };
             }
         }
@@ -380,7 +410,7 @@ return new Date(calendar.getTime().getTime());
      *          the book does not exist
      */
     #sql iterator BookInfoCursor(String);
-    
+
     public Object[] getBookInformation(String callNumber) throws ErrorMessage
     {
         List originalAuthors = new ArrayList();
@@ -392,54 +422,54 @@ return new Date(calendar.getTime().getTime());
         try
         {
             String title = null, format = null;
-            
+
             #sql { select title, format
                     into :title, :format
                     from Book_info
                     where call_number = :callNumber
                  };
-                 
+
             values[3] = title;
             values[5] = format;
-            
+
             BookInfoCursor cursor;
-            
+
             #sql cursor = { select author_name
                                 from Book_author
                                 where call_number = :callNumber
                           };
-                                
+
             String author = null;
-            
+
             while(true)
             {
                 #sql { fetch :cursor into :author
                      };
-                     
+
                 if (cursor.endFetch()) break;
-                
+
                 originalAuthors.add(author);
             }
-            
+
             values[4] = originalAuthors;
-                
+
             #sql cursor = { select keyword
                                 from Book_keyword
                                 where call_number = :callNumber
                           };
-                                
+
             String keyword = null;
-            
+
             while(true)
             {
                 #sql { fetch :cursor into :keyword
                      };
-                     
+
                 if (cursor.endFetch()) break;
-                
+
                 originalKeywords.add(keyword);
             }
-            
+
             values[6] = originalKeywords;
         }
         catch(SQLException e)
@@ -491,13 +521,13 @@ return new Date(calendar.getTime().getTime());
                  };
 
 			// Remove old list of authors
-			
+
 			#sql { delete from Book_author
 							where call_number = :callNumber
 				 };
-            
+
             // Insert new list of authors
-                
+
             Iterator newAuthorsIterator = newAuthors.iterator();
 
             while(newAuthorsIterator.hasNext())
@@ -507,15 +537,15 @@ return new Date(calendar.getTime().getTime());
 							values(:callNumber, :newAuthor)
 					 };
             }
-        
+
 			// Remove old list of keywords
-			
+
 			#sql { delete from Book_keyword
 						where call_number = :callNumber
 				 };
-            
+
             // Insert new list of keywords
-            
+
             Iterator newKeywordsIterator = newKeywords.iterator();
 
             while(newKeywordsIterator.hasNext())
@@ -525,7 +555,7 @@ return new Date(calendar.getTime().getTime());
 							values(:callNumber, :newKeyword)
 					 };
             }
-            
+
             #sql { commit };
         }
         catch(SQLException e)
@@ -572,7 +602,7 @@ return new Date(calendar.getTime().getTime());
         {
             short barCode = 0;
             String title = null, format = null;
-            
+
             #sql { select bar_code, title, format
                     into :barCode, :title, :format
                     from Book join Book_info
@@ -580,49 +610,49 @@ return new Date(calendar.getTime().getTime());
                     where Book.call_number = :callNumber and
                           Book.copy_number = :copyNumber
                  };
-                 
+
             values[2] = "" + barCode;
             values[3] = title;
             values[5] = format;
-            
+
             BookInfoCursor cursor;
-            
+
             #sql cursor = { select author_name
                                 from Book_author
                                 where call_number = :callNumber
                           };
-                                
+
             String author = null;
-            
+
             while(true)
             {
                 #sql { fetch :cursor into :author
                      };
-                     
+
                 if (cursor.endFetch()) break;
-                
+
                 originalAuthors.add(author);
             }
-            
+
             values[4] = originalAuthors;
-                
+
             #sql cursor = { select keyword
                                 from Book_keyword
                                 where call_number = :callNumber
                           };
-                                
+
             String keyword = null;
-            
+
             while(true)
             {
                 #sql { fetch :cursor into :keyword
                      };
-                     
+
                 if (cursor.endFetch()) break;
-                
+
                 originalKeywords.add(keyword);
             }
-            
+
             values[6] = originalKeywords;
         }
         catch(SQLException e)
@@ -657,7 +687,7 @@ return new Date(calendar.getTime().getTime());
                         where call_number = :callNumber and
                               copy_number = :copyNumber
                  };
-                 
+
             #sql { commit };
         }
         catch(SQLException e)
@@ -757,7 +787,7 @@ return new Date(calendar.getTime().getTime());
         try
         {
             #sql { update category
-                        set checkout_period = :newCheckoutPeriod, 
+                        set checkout_period = :newCheckoutPeriod,
                             max_books_out = :newMaxBooksOut
                         where category_name = :categoryName
                  };
@@ -920,15 +950,15 @@ System.out.println("deleteBorrower(" + toString(information) + ") called");
      */
 
     #sql iterator FineCursor(String, Date, Date, BigDecimal);
-    
+
     public List getFines(String borrowerID) throws ErrorMessage
     {
         List result = new ArrayList();
-        
+
         try
         {
             FineCursor cursor;
-            
+
             // The compiler doesn't catch that the fetch below initializes
             // these variables, so give them default values now to keep the
             // compiler happy
@@ -938,12 +968,12 @@ System.out.println("deleteBorrower(" + toString(information) + ") called");
             Date dateReturned = null;
             BigDecimal amount = null;
 
-            #sql cursor = { select title, date_due, date_returned, amount 
+            #sql cursor = { select title, date_due, date_returned, amount
                                 from fine
                                 where borrower_id = :borrowerID
                                 order by date_returned
                           };
-            
+
             while(true)
             {
                 #sql { fetch :cursor into :title,
@@ -951,11 +981,11 @@ System.out.println("deleteBorrower(" + toString(information) + ") called");
                                           :dateReturned,
                                           :amount
                      };
-                     
+
                 if (cursor.endFetch()) break;
-                    
+
                 Fine fine = new Fine(title, dateDue, dateReturned, amount);
-                                     
+
                 result.add(fine);
             }
             cursor.close();
@@ -968,19 +998,19 @@ System.out.println("deleteBorrower(" + toString(information) + ") called");
         {
             rollback();
         }
-    
+
         if (result.size() == 0)
         {
             // No fines found - either the borrower doesn't exist, or has no fines
             // The following determines which is the case
-            
+
             boolean borrowerExists;
-            
+
             String dummy = null;
             try
             {
                 #sql { select last_name into :dummy
-                            from borrower 
+                            from borrower
                             where borrower_id = : borrowerID };
                 borrowerExists = true;
             }
@@ -988,7 +1018,7 @@ System.out.println("deleteBorrower(" + toString(information) + ") called");
             {
                 // If the above statement failed because no row was found,
                 // this means the borrower doesn't exist
-                
+
                 if (e.getSQLState().equals(NO_ROW_SQL_STATE))
                     borrowerExists = false;
                 else
@@ -998,7 +1028,7 @@ System.out.println("deleteBorrower(" + toString(information) + ") called");
             {
                 rollback();
             }
-    
+
             if (borrowerExists)
                 throw new ErrorMessage("This borrower has no fines");
             else
@@ -1034,7 +1064,7 @@ System.out.println("payFine() " + borrowerID + " " + fine.getAmountDue() + " cal
      *  @exception an ErrorMessage is thrown if there is an unexpected error
      *             accessing the database.
      */
-    
+
     #sql iterator BooksReportCursor(String, String, String, String, int);
 
     public void booksReport(PrintStream stream) throws ErrorMessage
@@ -1045,29 +1075,29 @@ System.out.println("payFine() " + borrowerID + " " + fine.getAmountDue() + " cal
 
             // Left joins are used to ensure we include Book_info even if there
             // is no author or copy recorded
-            #sql cursor = { select Book_info.call_number, 
+            #sql cursor = { select Book_info.call_number,
                                    title,
                                    author_name,
                                    format,
                                    count(copy_number)
-                                from Book_info left join Book_author 
+                                from Book_info left join Book_author
                                 on Book_info.call_number = Book_author.call_number
-                                left join Book 
+                                left join Book
                                 on Book_info.call_number = Book.call_number
                                 group by Book_info.call_number,
                                          title,
                                          author_name,
                                          format
-                                order by Book_info.call_number 
+                                order by Book_info.call_number
                            };
 
-            String [] BOOKS_REPORT_HEADINGS = 
+            String [] BOOKS_REPORT_HEADINGS =
                 { "Call Number", "Title", "Author", "Format", "# copies" };
             int [] BOOKS_REPORT_COLUMN_WIDTHS =
                 { 22, 52, 22, 4, 5 };
             boolean [] BOOKS_REPORT_REPEAT_COLUMNS =
                 { true, true, false, true, true };
-                
+
             produceReport(stream,
                           "Book Information Report",
                           BOOKS_REPORT_HEADINGS,
@@ -1076,7 +1106,7 @@ System.out.println("payFine() " + borrowerID + " " + fine.getAmountDue() + " cal
                           cursor.getResultSet());
 
             cursor.close();
-            
+
         }
         catch(SQLException e)
         {
@@ -1099,13 +1129,13 @@ System.out.println("payFine() " + borrowerID + " " + fine.getAmountDue() + " cal
     public void bookCopiesReport(PrintStream stream) throws ErrorMessage
     {
 // STUB
-            String [] BOOKS_COPIES_REPORT_HEADINGS = 
+            String [] BOOKS_COPIES_REPORT_HEADINGS =
                 { "Bar Code", "Call Number", "Copy #", "Title" };
             int [] BOOKS_COPIES_REPORT_COLUMN_WIDTHS =
                 { 13, 22, 8, 50 };
             boolean [] BOOKS_COPIES_REPORT_REPEAT_COLUMNS =
                 { false, false, false, false };
-stream.println("Book Copies report");        
+stream.println("Book Copies report");
     }
 
     /** Produce a keywords report - keywords listed in alphabetical order,
@@ -1119,13 +1149,13 @@ stream.println("Book Copies report");
     public void keywordsReport(PrintStream stream) throws ErrorMessage
     {
 // STUB
-            String [] BOOKS_KEYWORD_REPORT_HEADINGS = 
+            String [] BOOKS_KEYWORD_REPORT_HEADINGS =
                 { "Keyword", "Call Number", "Title" };
             int [] BOOKS_KEYWORD_REPORT_COLUMN_WIDTHS =
                 { 22, 22, 50 };
             boolean [] BOOKS_KEYWORD_REPORT_REPEAT_COLUMNS =
                 { false, false, false };
-stream.println("Book Keywords report");            
+stream.println("Book Keywords report");
     }
 
     /** Produce a list of all categories - name, max books out, checkout period
@@ -1137,7 +1167,7 @@ stream.println("Book Keywords report");
      */
 
     #sql iterator CategoryReportCursor(String, int, int);
-    
+
     public void categoriesReport(PrintStream stream) throws ErrorMessage
     {
         try
@@ -1146,11 +1176,11 @@ stream.println("Book Keywords report");
 
             #sql cursor = { select * from category order by category_name };
 
-            String [] CATEGORY_REPORT_HEADINGS = 
+            String [] CATEGORY_REPORT_HEADINGS =
                 { "Category Name", "Checkout Period", "Maximum Books Out" };
             int [] CATEGORY_REPORT_COLUMN_WIDTHS =
                 { 15, 17, 10 };
-        
+
             produceReport(stream,
                           "Categories Report",
                           CATEGORY_REPORT_HEADINGS,
@@ -1159,7 +1189,7 @@ stream.println("Book Keywords report");
                           cursor.getResultSet());
 
             cursor.close();
-            
+
         }
         catch(SQLException e)
         {
@@ -1170,7 +1200,7 @@ stream.println("Book Keywords report");
             rollback();
         }
     }
-    
+
     /** Produce a list of all borrowers - id, name, phone number(s), category
      *
      *  @param stream the stream to which to print the report
@@ -1181,13 +1211,13 @@ stream.println("Book Keywords report");
     public void borrowersReport(PrintStream stream) throws ErrorMessage
     {
 // STUB
-            String [] BORROWERS_REPORT_HEADINGS = 
+            String [] BORROWERS_REPORT_HEADINGS =
                 { "Borrower ID", "Last Name", "First Name", "Phone #", "Category" };
             int [] BORROWERS_REPORT_COLUMN_WIDTHS =
                 { 12, 22, 22, 22, 10 };
             boolean [] BORROWERS_REPORT_REPEAT_COLUMNS =
                 { true, true, true, false, true };
-stream.println("Borrowers report");               
+stream.println("Borrowers report");
     }
 
     /** Produce a list of all fines outstanding - borrower name and
@@ -1201,13 +1231,13 @@ stream.println("Borrowers report");
     public void finesReport(PrintStream stream) throws ErrorMessage
     {
 // STUB
-            String [] FINES_REPORT_HEADINGS = 
+            String [] FINES_REPORT_HEADINGS =
                 { "Last Name", "First Name", "Phone #", "Total Fines" };
             int [] FINES_REPORT_COLUMN_WIDTHS =
                 { 22, 22, 22, 11 };
             boolean [] FINES_REPORT_REPEAT_COLUMNS =
                 { true, true, false, true };
-stream.println("Fines report");         
+stream.println("Fines report");
     }
 
     /** Produce a list of all overdue books - borrower name,
@@ -1221,19 +1251,19 @@ stream.println("Fines report");
     public void overdueBooksReport(PrintStream stream) throws ErrorMessage
     {
 // STUB
-            String [] OVERDUE_BOOKS_REPORT_HEADINGS = 
+            String [] OVERDUE_BOOKS_REPORT_HEADINGS =
                 { "Last Name", "First Name", "Title", "Date Due" };
             int [] OVERDUE_BOOKS_REPORT_COLUMN_WIDTHS =
                 { 22, 22, 52, 10 };
             boolean [] OVERDUE_BOOKS_REPORT_REPEAT_COLUMNS =
-                { true, true, false, false };            
+                { true, true, false, false };
 stream.println("Overdue Books report");
     }
 
     /* ************************************************************************
-     * Utility methods 
+     * Utility methods
      * ***********************************************************************/
-     
+
     /** Roll back a read-only transaction or a failed write transaction
      *
      */
@@ -1245,12 +1275,12 @@ stream.println("Overdue Books report");
         }
         catch(SQLException e)
         {
-            System.out.println("Fatal error: SQL Exception " + e.getErrorCode() + 
+            System.out.println("Fatal error: SQL Exception " + e.getErrorCode() +
                 " " + e.getMessage() + " during rollback. ");
             System.exit(1);
         }
     }
-    
+
     /** Print a neatly formatted report
      *
      *  @param stream the stream to print the report to
@@ -1258,7 +1288,7 @@ stream.println("Overdue Books report");
      *  @param columnHeaadings the headings for the report's columns
      *  @param columnWidths the widths for the various columns
      *  @param repeatColumns for some report formats, certain values need to
-     *         be suppressed for all but their first occurrence if the exact 
+     *         be suppressed for all but their first occurrence if the exact
      *         same values occur on successive lines of the report.  This
      *         array specifies which columns these are.  If _all_ of the
      *         columns specified contain the exact same values on
@@ -1274,11 +1304,11 @@ stream.println("Overdue Books report");
                                boolean [] repeatColumns,
                                ResultSet resultSet) throws SQLException
     {
-        stream.println(); stream.println(heading); 
+        stream.println(); stream.println(heading);
         for (int i = 0; i < heading.length(); i ++)
             stream.print('_');
         stream.println(); stream.println();
-        
+
         for (int i = 0; i < columnHeadings.length; i ++)
             stream.print(pad(columnHeadings[i], columnWidths[i]));
         stream.println();
@@ -1289,14 +1319,14 @@ stream.println("Overdue Books report");
             stream.print(pad("", columnWidths[i] - columnHeadings[i].length()));
         }
         stream.println(); stream.println();
-        
+
         String [] previousLineValues = new String [columnHeadings.length];
-            
+
         while(resultSet.next())
         {
             String [] currentLineValues = new String [columnHeadings.length];
             boolean repeatValuesSame = repeatColumns != null;
-            
+
             for (int i = 0; i < currentLineValues.length; i ++)
             {
                 currentLineValues[i] = resultSet.getString(i + 1);
@@ -1304,7 +1334,7 @@ stream.println("Overdue Books report");
                         ! currentLineValues[i].equals(previousLineValues[i]))
                     repeatValuesSame = false;
             }
-            
+
             for (int i = 0; i < currentLineValues.length; i ++)
             {
                 if (repeatValuesSame && repeatColumns[i])
@@ -1312,13 +1342,13 @@ stream.println("Overdue Books report");
                 else
                     stream.print(pad(currentLineValues[i], columnWidths[i]));
             }
-            
+
             stream.println();
             previousLineValues = currentLineValues;
         }
         stream.println(); stream.println();
     }
-        
+
     /** Pad a string with spaces
      *
      *  @param input the string to pad.  Can be null - in which case it will
@@ -1335,8 +1365,8 @@ stream.println("Overdue Books report");
         while(result.length() < width)
             result.append(' ');
         return result.toString();
-    }               
-        
+    }
+
     /* ************************************************************************
      * To facilitate testing, the database maintains a variable called today
      * that can be altered from a menu.  The following methods support this
@@ -1364,7 +1394,7 @@ stream.println("Overdue Books report");
         	rollback();
         }
 	}
-	
+
 	/** Adjust the value of today forward a backward
 	 *
 	 *	@param amount the amount to change (forward if >0; backward if < 0)
@@ -1387,7 +1417,7 @@ stream.println("Overdue Books report");
         	rollback();
         }
 	}
-	
+
 	/** Get the current value of today
 	 *
 	 *  @return the current value of today
@@ -1408,10 +1438,10 @@ stream.println("Overdue Books report");
         {
         	rollback();
         }
-	} 
+	}
 
 	Connection connection;
-	
+
     /* ************************************************************************
      * Class constants and method
      * ***********************************************************************/
@@ -1422,15 +1452,15 @@ stream.println("Overdue Books report");
     private static final String NO_ROW_SQL_STATE = "02000";
     private static final int DUPLICATE_KEY_SQL_ERROR = -803;
 
-    private static final String BOOK_INFO_VALID_FORMAT_CONSTRAINT = 
+    private static final String BOOK_INFO_VALID_FORMAT_CONSTRAINT =
         "~~~ YOU NEED TO FILL THIS IN ~~~";
-    private static final String BOOK_KEYWORD_VALID_KEYWORD_CONSTRAINT = 
+    private static final String BOOK_KEYWORD_VALID_KEYWORD_CONSTRAINT =
         "~~~ YOU NEED TO FILL THIS IN ~~~";
     private static final String BORROWER_CATEGORY_FOREIGN_CONSTRAINT =
         "~~~ YOU NEED TO FILL THIS IN ~~~";
-   
+
     private static final String BOOK_AUTHOR_TABLE_NAME = "BOOK_AUTHOR";
-    
+
     private static final String DRIVER_NAME = "com.ibm.db2.jcc.DB2Driver";
     private static final String DATABASE_URL =
     	"jdbc:db2://localhost:50000/project";
