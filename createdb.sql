@@ -104,7 +104,7 @@ create trigger book_limit_reached_trigger
 	when ((SELECT count(*)
 		   FROM Checked_out
 		   WHERE borrower_id = n.borrower_id)
-		   >=               --books out greater than or equal to max_books_out?
+		   >=               --books out greater than or equal to max_books_out
 		   (SELECT max_books_out
 	       FROM Borrower join Category
 		   ON Borrower.category_name = Category.category_name
@@ -112,20 +112,22 @@ create trigger book_limit_reached_trigger
 		signal sqlstate '79999'
 		set message_text = 'MAX_BOOKS_ALREADY_OUT';
 
+
+-- This trigger will execute after an entry is removed from the Checked_out
+--    table (aka book has been returned). The trigger checks if book is
+--	  overdue. If so, a fine is inserted into the fines table.
 create trigger assess_fine_trigger
-    before delete on Checked_out
+    after delete on Checked_out
 	referencing old as o
 	for each row
 	when (o.date_due < today)
-    BEGIN
         INSERT INTO Fine(borrower_id, title, date_due, date_returned, amount)
         values (o.borrower_id,
-		(SELECT title
-		 FROM Checked_out JOIN Book
-		 ON Checked_out.call_number = Book.call_number
-		 AND Checked_out.copy_number = Book.copy_number JOIN Book_info
-		 ON Book.call_number = Book_info.call_number
-		 WHERE Book_info.call_number = o.call_number),
-		o.date_due, today,
-        (fine_daily_rate_in_cents * (days(today) - days(o.date_due))))
-    END
+        (SELECT title
+        FROM Checked_out JOIN Book
+        ON Checked_out.call_number = Book.call_number
+        AND Checked_out.copy_number = Book.copy_number JOIN Book_info
+        ON Book.call_number = Book_info.call_number
+        WHERE Book_info.call_number = o.call_number),
+        o.date_due, today,
+        (fine_daily_rate_in_cents * (days(today) - days(o.date_due))));
