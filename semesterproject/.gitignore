@@ -4,3 +4,6 @@
 
 #This is omitting the "pure java" compiled file
 *.java
+
+#My personal file for testing...
+temp_combined.sql

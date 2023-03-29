@@ -5,9 +5,8 @@ Jake Colbert and Eddy Botelho
 -----:Functional Dependencies:-----
 
 call_number -> title, format
-call_number, copy_number -> barcode                    (buc?)
-call_number, copy_number -> date_due, borrower_id
-barcode -> call_number, copy_number, title, format     (buc?)
+call_number, copy_number -> date_due, borrower_id, barcode  (buc?)
+barcode -> call_number, copy_number, title, format          (buc?)
 
 borrower_id -> first_name, last_name, catagory_name
 borrower_id, title, date_due -> date_returned, amount

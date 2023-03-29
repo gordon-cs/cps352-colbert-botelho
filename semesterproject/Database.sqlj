@@ -150,7 +150,7 @@ public class Database
         	throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
         }
 
-// STUB (I implemented this--still learning what is going on...potentially wrong)
+// STUB
 
         if (borrowerID.equals("BAD")) {
             throw new ErrorMessage("Error message test getBorrowerName");
@@ -173,7 +173,7 @@ public class Database
                              String callNumber,
                              short copyNumber) throws ErrorMessage
     {
-// STUB (I implemented this--still learning what is going on...potentially wrong)
+// STUB
         //these lines get date due I think?
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DATE, 10);
