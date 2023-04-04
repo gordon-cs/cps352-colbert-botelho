@@ -130,4 +130,4 @@ create trigger assess_fine_trigger
         ON Book.call_number = Book_info.call_number
         WHERE Book_info.call_number = o.call_number),
         o.date_due, today,
-        (fine_daily_rate_in_cents * (days(today) - days(o.date_due))));
+        ((fine_daily_rate_in_cents * (days(today) - days(o.date_due)))/100));
