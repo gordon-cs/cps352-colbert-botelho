@@ -138,7 +138,8 @@ public class Database
      */
     public String getBorrowerName(String borrowerID) throws ErrorMessage
     {
-        String b_name = "test";
+// IMPLEMENTED STUB (Implemented by EB)
+        String b_name = null;
         try {
             #sql { SELECT *
                    INTO :b_name
@@ -148,12 +149,6 @@ public class Database
         } catch(SQLException e) {
             rollback();
         	throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
-        }
-
-// STUB (Implemented by EB)
-
-        if (borrowerID.equals("BAD")) {
-            throw new ErrorMessage("Error message test getBorrowerName");
         }
         return b_name;
     }
@@ -848,7 +843,7 @@ return new Date(calendar.getTime().getTime());
                             List phones,
                             String category) throws ErrorMessage
     {
-// STUB (Implemented by EB)
+// IMPLEMENTED STUB (Implemented by EB)
         try {
             //Insert into borrower table
             #sql { INSERT INTO Borrower
@@ -871,8 +866,7 @@ return new Date(calendar.getTime().getTime());
         } catch(SQLException e) {
             rollback();
 
-            System.out.println(
-                "addBorrower(" + toString(newInformation) + ") called");
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
         }
     }
 
@@ -891,6 +885,7 @@ return new Date(calendar.getTime().getTime());
 
     public Object [] getBorrowerInformation(String borrowerID) throws ErrorMessage
     {
+    // IMPLEMENTED STUB (Implemented by EB)
         List originalPhones = new ArrayList();
         Object [] values = new Object[5];
         values[0] = borrowerID;

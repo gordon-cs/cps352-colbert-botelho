@@ -1,4 +1,4 @@
-! Example of a testing file.   THESE ARE FAR FROM SUFFICIENT TESTS!  
+! Example of a testing file.   THESE ARE FAR FROM SUFFICIENT TESTS!
 ! STUDENTS: BE SURE THE FILE YOU TURN IN TESTS EVERYTHING
 ! STUDENTS: PUT YOUR NAME(S) HERE
 !
@@ -19,7 +19,7 @@ W AA.00 1
 ! Example of date modification and returning a book late
 + 30
 R AA.00 2
-! Examples of fine tests. 
+! Examples of fine tests.
 G 1234
 ! Change date on next line to be 14 days after date test is run
 F 1234 "LEGITIMATE BOOK" 2023-01-01
@@ -40,3 +40,14 @@ PO
 DK AA.00 1
 DR 1234
 DC PEON
+
+!----------------START OF TEST SUITE----------------------
+
+! Basic add borrower tests
+AR e1111 MCALPINE LIZZY { 123-456-7890 098-765-4321 } VOCALIST
+AR e1112 MAYER JOHN { 123-456-7890 098-765-4321 } GUITARIST
+AR e1113 PUTH CHARLIE { 123-456-7890 098-765-4321 } VOCALIST
+
+! Testing primary key for borrower (second insert of Spurgeon should fail)
+AR e1114 LEWIS C.S. { 123-456-7890 098-765-4321 } WRITER
+AR e1114 SPURGEON CHARLES { 123-456-7890 098-765-4321 } THEOLOGIAN
