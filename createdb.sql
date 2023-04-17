@@ -8,65 +8,85 @@ connect to project;
  */
 
 create variable today date;
+-- Bjork left comment about the fine rate. Does it evaluate properly? $5 or $0.05
 create variable fine_daily_rate_in_cents integer default 5;
 
 create table Category(
-	category_name char(10),
-	checkout_period integer,
-	max_books_out integer
+	category_name char(10) PRIMARY KEY NOT NULL,
+	checkout_period integer NOT NULL,
+	max_books_out integer NOT NULL
 );
 
 create table Borrower(
-	borrower_id char(10),
-	last_name char(20),
-	first_name char(20),
-	category_name char(10)
-);
-
-create table Borrower_phone(
-    borrower_id char(10),
-    phone char(20)
+	borrower_id char(10) PRIMARY KEY NOT NULL,
+	last_name char(20) NOT NULL,
+	first_name char(20) NOT NULL,
+	category_name char(10) NOT NULL,
+    CONSTRAINT FK_Borrower_Category FOREIGN KEY (category_name) 
+    	REFERENCES Category(category_name) ON DELETE CASCADE
 );
 
 create table Book_info(
-	call_number char(20),
-	title char(50),
-	format char(2)
+	call_number char(20) PRIMARY KEY NOT NULL,
+	title char(50) NOT NULL,
+	format char(2) NOT NULL
 );
 
--- The code supplied below for bar_code will cause it to be generated
--- automatically when a new Book is added to the database
-
 create table Book(
-	call_number char(20),
-	copy_number smallint,
+	call_number char(20) NOT NULL,
+	copy_number smallint NOT NULL,
 	bar_code integer
-		generated always as identity (start with 1)
+		generated always as identity (start with 1),
+    CONSTRAINT PK_Book PRIMARY KEY (call_number, copy_number),
+    CONSTRAINT FK_Book_Book_info FOREIGN KEY (call_number) 
+    	REFERENCES Book_info(call_number) ON DELETE CASCADE
+);
+
+create table Borrower_phone(
+    borrower_id char(10) NOT NULL,
+    phone char(20) NOT NULL,
+    CONSTRAINT FK_Borrower_phone_Borrower FOREIGN KEY (borrower_id) 
+    	REFERENCES Borrower(borrower_id) ON DELETE CASCADE
 );
 
 create table Book_author(
-	call_number char(20),
-	author_name char(20)
+	call_number char(20) NOT NULL,
+	author_name char(20) NOT NULL, 
+    -- composite key better implemented by assigning call_number as unique?
+    CONSTRAINT CK_Book_author PRIMARY KEY (call_number, author_name),
+    CONSTRAINT FK_Book_author_Book_info FOREIGN KEY (call_number) 
+    	REFERENCES Book_info(call_number) ON DELETE CASCADE
 );
 
 create table Book_keyword(
-    call_number char(20),
-    keyword varchar(20)
+    call_number char(20) NOT NULL,
+    keyword varchar(20) NOT NULL, 
+    CONSTRAINT CK_Book_keyword PRIMARY KEY (call_number, keyword),
+    CONSTRAINT FK_Book_keyword_Book_info FOREIGN KEY (call_number) 
+    	REFERENCES Book_info(call_number) ON DELETE CASCADE
 );
 
 create table Checked_out(
-	call_number char(20),
-	copy_number smallint,
-	borrower_id char(10),
-	date_due date
+	call_number char(20) NOT NULL,
+	copy_number smallint NOT NULL,
+	borrower_id char(10) NOT NULL,
+	date_due date NOT NULL,
+    CONSTRAINT CK_Checked_out PRIMARY KEY (call_number, copy_number),
+    CONSTRAINT FK_Checked_out_Book FOREIGN KEY (call_number, copy_number) 
+    	REFERENCES Book(call_number, copy_number) ON DELETE CASCADE,
+    CONSTRAINT FK_Checked_out_Borrower FOREIGN KEY (borrower_id) 
+    	REFERENCES Borrower(borrower_id) ON DELETE CASCADE
 );
 
 create table Fine(
-	borrower_id char(10),
-	title char(50),
-	date_due date,
-	date_returned date,
-	amount numeric(10,2)
+	borrower_id char(10) NOT NULL,
+	title char(50) NOT NULL,
+	date_due date NOT NULL,
+	date_returned date NOT NULL,
+	amount numeric(10,2) NOT NULL,
+    CONSTRAINT CK_Fine PRIMARY KEY (borrower_id, title, date_due),
+    CONSTRAINT FK_Fine_Borrower FOREIGN KEY (borrower_id) 
+    	REFERENCES Borrower(borrower_id) ON DELETE CASCADE
 );
 
 -- This trigger will delete all other information on book if last
