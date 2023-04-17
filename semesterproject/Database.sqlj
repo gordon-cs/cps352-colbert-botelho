@@ -138,7 +138,8 @@ public class Database
      */
     public String getBorrowerName(String borrowerID) throws ErrorMessage
     {
-        String b_name = "test";
+// IMPLEMENTED STUB (Implemented by EB)
+        String b_name = null;
         try {
             #sql { SELECT *
                    INTO :b_name
@@ -148,12 +149,6 @@ public class Database
         } catch(SQLException e) {
             rollback();
         	throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
-        }
-
-// STUB
-
-        if (borrowerID.equals("BAD")) {
-            throw new ErrorMessage("Error message test getBorrowerName");
         }
         return b_name;
     }
@@ -848,16 +843,31 @@ return new Date(calendar.getTime().getTime());
                             List phones,
                             String category) throws ErrorMessage
     {
-// STUB
-if (borrowerID.equals("BAD")) throw new ErrorMessage("Error message test addBorrower");
-Object [] newInformation = new Object[5];
-newInformation[0] = borrowerID;
-newInformation[1] = lastName;
-newInformation[2] = firstName;
-newInformation[3] = phones;
-newInformation[4] = category;
-// STUB
-System.out.println("addBorrower(" + toString(newInformation) + ") called");
+// IMPLEMENTED STUB (Implemented by EB)
+        try {
+            //Insert into borrower table
+            #sql { INSERT INTO Borrower
+                    values (:borrowerID, :lastName, :firstName, :category)
+            };
+
+            //Insert into Borrower_phone table
+            Iterator phonesIterator = phones.iterator();
+            while(phonesIterator.hasNext()) {
+
+                String number = (String) phonesIterator.next();
+
+                #sql { INSERT INTO Borrower_phone
+                        values(:borrowerID, :number)
+                };
+            }
+
+            #sql { commit };
+
+        } catch(SQLException e) {
+            rollback();
+
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        }
     }
 
     /** Get information on an existing borrower about to be edited or deleted
@@ -871,18 +881,56 @@ System.out.println("addBorrower(" + toString(newInformation) + ") called");
      *  @exception an ErrorMessage is thrown with an appropriate message if
      *          the borrower does not exist
      */
+     #sql iterator BorrowerPhoneCursor(String);
+
     public Object [] getBorrowerInformation(String borrowerID) throws ErrorMessage
     {
+    // IMPLEMENTED STUB (Implemented by EB)
         List originalPhones = new ArrayList();
         Object [] values = new Object[5];
         values[0] = borrowerID;
-// STUB
-if (borrowerID.equals("BAD")) throw new ErrorMessage("Error message test getBorrowerInformation");
-values[1] = "Aardvark";
-values[2] = "Anthony";
-originalPhones.add("123-4567"); originalPhones.add("555-1212");
-        values[3] = originalPhones;
-values[4] = "Big Cheese";
+        try {
+            String last_name = null, first_name = null, category = null;
+
+            //Get the non multivalued stuff and put it in object
+            #sql { SELECT last_name, first_name, category_name
+                   INTO :last_name, :first_name, :category
+                   FROM Borrower
+                   WHERE borrower_id = :borrowerID };
+
+            values[1] = last_name;
+            values[2] = first_name;
+            values[3] = category;
+
+            //Get the multivalued stuff
+            BorrowerPhoneCursor cursor;
+
+            #sql cursor = {
+                SELECT phone
+                FROM Borrower_phone
+                WHERE borrower_id = :borrowerID
+            };
+
+            String phone = null;
+            while(true) {
+                #sql { fetch :cursor into :phone };
+
+                if (cursor.endFetch())
+                    break;
+
+                originalPhones.add(phone);
+            }
+
+            values[4] = originalPhones;
+
+        } catch (SQLException e) {
+            if (e.getSQLState().equals(NO_ROW_SQL_STATE))
+                throw new ErrorMessage("No such author exists");
+            else
+                throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        } finally {
+            rollback();
+        }
         return values;
     }
 
