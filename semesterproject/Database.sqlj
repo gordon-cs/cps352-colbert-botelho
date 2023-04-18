@@ -1217,16 +1217,40 @@ System.out.println("payFine() " + borrowerID + " " + fine.getAmountDue() + " cal
      *  @exception an ErrorMessage is thrown if there is an unexpected error
      *             accessing the database.
      */
+
+    #sql iterator KeywordReportCursor(String, String, String);
     public void keywordsReport(PrintStream stream) throws ErrorMessage
     {
-// STUB
-            String [] BOOKS_KEYWORD_REPORT_HEADINGS =
-                { "Keyword", "Call Number", "Title" };
-            int [] BOOKS_KEYWORD_REPORT_COLUMN_WIDTHS =
-                { 22, 22, 50 };
-            boolean [] BOOKS_KEYWORD_REPORT_REPEAT_COLUMNS =
-                { false, false, false };
-stream.println("Book Keywords report");
+        // STUB (Implemented by JC)
+        try {
+          KeywordReportCursor cursor;
+
+          // Left joins are used to ensure we include Book_info even if there
+          // is no author or copy recorded
+          #sql cursor = { select keyword, book_keyword.call_number, title
+                          from book_keyword
+                          join
+                          book_info
+                          on book_keyword.call_number = book_info.call_number
+                          };
+
+          String [] BOOKS_KEYWORD_REPORT_HEADINGS = { "Keyword", "Call Number", "Title" };
+          int [] BOOKS_KEYWORD_REPORT_COLUMN_WIDTHS = { 22, 22, 50 };
+          boolean [] BOOKS_KEYWORD_REPORT_REPEAT_COLUMNS = { false, false, false };
+
+        produceReport(stream,
+                      "Book Keywords Report",
+                      BOOKS_KEYWORD_REPORT_HEADINGS,
+                      BOOKS_KEYWORD_REPORT_COLUMN_WIDTHS,
+                      BOOKS_KEYWORD_REPORT_REPEAT_COLUMNS,
+                      cursor.getResultSet());
+        cursor.close();
+
+        } catch(SQLException e) {
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        } finally {
+            rollback();
+        }
     }
 
     /** Produce a list of all categories - name, max books out, checkout period
