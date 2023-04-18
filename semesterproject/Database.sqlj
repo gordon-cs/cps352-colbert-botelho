@@ -1174,16 +1174,39 @@ System.out.println("payFine() " + borrowerID + " " + fine.getAmountDue() + " cal
      *  @exception an ErrorMessage is thrown if there is an unexpected error
      *             accessing the database.
      */
+    #sql iterator BookCopyReportCursor(String, String, int, String);
+
     public void bookCopiesReport(PrintStream stream) throws ErrorMessage
     {
-// STUB
-            String [] BOOKS_COPIES_REPORT_HEADINGS =
-                { "Bar Code", "Call Number", "Copy #", "Title" };
-            int [] BOOKS_COPIES_REPORT_COLUMN_WIDTHS =
-                { 13, 22, 8, 50 };
-            boolean [] BOOKS_COPIES_REPORT_REPEAT_COLUMNS =
-                { false, false, false, false };
-stream.println("Book Copies report");
+        try {
+            BookCopyReportCursor cursor;
+
+            // Left joins are used to ensure we include Book_info even if there
+            // is no author or copy recorded
+            #sql cursor = { select bar_code, book.call_number, copy_number, title
+                            from book
+                            join
+                            book_info
+                            on book.call_number = book_info.call_number
+                            };
+
+          String [] BOOKS_COPIES_REPORT_HEADINGS = { "Bar Code", "Call Number", "Copy #", "Title" };
+          int [] BOOKS_COPIES_REPORT_COLUMN_WIDTHS = { 13, 22, 8, 50 };
+          boolean [] BOOKS_COPIES_REPORT_REPEAT_COLUMNS = { false, false, false, false };
+
+          produceReport(stream,
+                        "Book Copies Report",
+                        BOOKS_COPIES_REPORT_HEADINGS,
+                        BOOKS_COPIES_REPORT_COLUMN_WIDTHS,
+                        BOOKS_COPIES_REPORT_REPEAT_COLUMNS,
+                        cursor.getResultSet());
+          cursor.close();
+
+        } catch(SQLException e) {
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        } finally {
+            rollback();
+        }
     }
 
     /** Produce a keywords report - keywords listed in alphabetical order,
