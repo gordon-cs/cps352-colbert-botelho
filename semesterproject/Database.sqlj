@@ -1353,16 +1353,41 @@ System.out.println("payFine() " + borrowerID + " " + fine.getAmountDue() + " cal
      *  @exception an ErrorMessage is thrown if there is an unexpected error
      *             accessing the database.
      */
+
+    #sql iterator FinesReportCursor(String, String, String, float);
     public void finesReport(PrintStream stream) throws ErrorMessage
     {
-// STUB
+        // STUB IMPLEMENTED BY JC
+        try
+        {
+            FinesReportCursor cursor;
+
+            #sql cursor = { select * from borrower };
+
             String [] FINES_REPORT_HEADINGS =
                 { "Last Name", "First Name", "Phone #", "Total Fines" };
             int [] FINES_REPORT_COLUMN_WIDTHS =
                 { 22, 22, 22, 11 };
             boolean [] FINES_REPORT_REPEAT_COLUMNS =
                 { true, true, false, true };
-stream.println("Fines report");
+
+            produceReport(stream,
+                          "Fines Report",
+                          FINES_REPORT_HEADINGS,
+                          FINES_REPORT_COLUMN_WIDTHS,
+                          FINES_REPORT_REPEAT_COLUMNS,
+                          cursor.getResultSet());
+            cursor.close();
+
+        }
+        catch(SQLException e)
+        {
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        }
+        finally
+        {
+            rollback();
+        }
     }
 
     /** Produce a list of all overdue books - borrower name,
@@ -1373,16 +1398,45 @@ stream.println("Fines report");
      *  @exception an ErrorMessage is thrown if there is an unexpected error
      *             accessing the database.
      */
+
+    #sql iterator OverdueReportCursor(String, String, String, String);
     public void overdueBooksReport(PrintStream stream) throws ErrorMessage
     {
-// STUB
+        // STUB IMPLEMENTED BY JC
+        try
+        {
+            OverdueReportCursor cursor;
+
+            #sql cursor = { select last_name, first_name, title, date_due
+                            from fine
+                            join 
+                            borrower
+                            on fine.borrower_id = borrower.borrower_id };
+
             String [] OVERDUE_BOOKS_REPORT_HEADINGS =
                 { "Last Name", "First Name", "Title", "Date Due" };
             int [] OVERDUE_BOOKS_REPORT_COLUMN_WIDTHS =
                 { 22, 22, 52, 10 };
             boolean [] OVERDUE_BOOKS_REPORT_REPEAT_COLUMNS =
                 { true, true, false, false };
-stream.println("Overdue Books report");
+
+            produceReport(stream,
+                          "Overdue Books Report",
+                          OVERDUE_BOOKS_REPORT_HEADINGS,
+                          OVERDUE_BOOKS_REPORT_COLUMN_WIDTHS,
+                          OVERDUE_BOOKS_REPORT_REPEAT_COLUMNS,
+                          cursor.getResultSet());
+            cursor.close();
+
+        }
+        catch(SQLException e)
+        {
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        }
+        finally
+        {
+            rollback();
+        }
     }
 
     /* ************************************************************************
