@@ -1362,7 +1362,13 @@ System.out.println("payFine() " + borrowerID + " " + fine.getAmountDue() + " cal
         {
             FinesReportCursor cursor;
 
-            #sql cursor = { select * from borrower };
+            #sql cursor = { select last_name, first_name, phone, sum(amount)
+              from fine
+              join borrower
+              on fine.borrower_id = borrower.borrower_id
+              join borrower_phone
+              on fine.borrower_id = borrower_phone.borrower_id
+              group by last_name, first_name, phone; };
 
             String [] FINES_REPORT_HEADINGS =
                 { "Last Name", "First Name", "Phone #", "Total Fines" };
