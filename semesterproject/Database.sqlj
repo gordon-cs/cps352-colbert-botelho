@@ -1284,41 +1284,41 @@ stream.println("Book Keywords report");
 
     public void borrowersReport(PrintStream stream) throws ErrorMessage
     {
-      // STUB IMPLEMENTED BY JC
-      try
-      {
-          BorrowersReportCursor cursor;
+        // STUB IMPLEMENTED BY JC
+        try
+        {
+            BorrowersReportCursor cursor;
 
-          #sql cursor = { select borrower_phone.borrower_id, last_name, first_name, phone, category_name
-                          from borrower
-                          join
-                          borrower_phone
-                          on borrower.borrower_id = borrower_phone.borrower_id};
+            #sql cursor = { select borrower_phone.borrower_id, last_name, first_name, phone, category_name
+                            from borrower
+                            join
+                            borrower_phone
+                            on borrower.borrower_id = borrower_phone.borrower_id};
 
-          String [] BORROWERS_REPORT_HEADINGS =
-                { "Borrower ID", "Last Name", "First Name", "Phone #", "Category" };
-            int [] BORROWERS_REPORT_COLUMN_WIDTHS =
-                { 12, 22, 22, 22, 10 };
-            boolean [] BORROWERS_REPORT_REPEAT_COLUMNS =
-                { true, true, true, false, true };
+            String [] BORROWERS_REPORT_HEADINGS =
+                  { "Borrower ID", "Last Name", "First Name", "Phone #", "Category" };
+              int [] BORROWERS_REPORT_COLUMN_WIDTHS =
+                  { 12, 22, 22, 22, 10 };
+              boolean [] BORROWERS_REPORT_REPEAT_COLUMNS =
+                  { true, true, true, false, true };
 
-          produceReport(stream,
-                        "Borrowers Report",
-                        BORROWERS_REPORT_HEADINGS,
-                        BORROWERS_REPORT_COLUMN_WIDTHS,
-                        BORROWERS_REPORT_REPEAT_COLUMNS,
-                        cursor.getResultSet());
-          cursor.close();
+            produceReport(stream,
+                          "Borrowers Report",
+                          BORROWERS_REPORT_HEADINGS,
+                          BORROWERS_REPORT_COLUMN_WIDTHS,
+                          BORROWERS_REPORT_REPEAT_COLUMNS,
+                          cursor.getResultSet());
+            cursor.close();
 
-      }
-      catch(SQLException e)
-      {
-          throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
-      }
-      finally
-      {
-          rollback();
-      }
+        }
+        catch(SQLException e)
+        {
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        }
+        finally
+        {
+            rollback();
+        }
     }
 
     /** Produce a list of all fines outstanding - borrower name and
