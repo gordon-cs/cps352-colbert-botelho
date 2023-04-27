@@ -22,14 +22,15 @@ create table Borrower(
 	last_name char(20) NOT NULL,
 	first_name char(20) NOT NULL,
 	category_name char(10) NOT NULL,
-    CONSTRAINT FK_Borrower_Category FOREIGN KEY (category_name) 
+    CONSTRAINT FK_Borrower_Category FOREIGN KEY (category_name)
     	REFERENCES Category(category_name) ON DELETE CASCADE
 );
 
 create table Book_info(
 	call_number char(20) PRIMARY KEY NOT NULL,
 	title char(50) NOT NULL,
-	format char(2) NOT NULL
+	format char(2) NOT NULL,
+	CONSTRAINT format_type CHECK (format IN ('HC, SC, CD, MF, PE'))
 );
 
 create table Book(
@@ -38,31 +39,31 @@ create table Book(
 	bar_code integer
 		generated always as identity (start with 1),
     CONSTRAINT PK_Book PRIMARY KEY (call_number, copy_number),
-    CONSTRAINT FK_Book_Book_info FOREIGN KEY (call_number) 
+    CONSTRAINT FK_Book_Book_info FOREIGN KEY (call_number)
     	REFERENCES Book_info(call_number) ON DELETE CASCADE
 );
 
 create table Borrower_phone(
     borrower_id char(10) NOT NULL,
     phone char(20) NOT NULL,
-    CONSTRAINT FK_Borrower_phone_Borrower FOREIGN KEY (borrower_id) 
+    CONSTRAINT FK_Borrower_phone_Borrower FOREIGN KEY (borrower_id)
     	REFERENCES Borrower(borrower_id) ON DELETE CASCADE
 );
 
 create table Book_author(
 	call_number char(20) NOT NULL,
-	author_name char(20) NOT NULL, 
+	author_name char(20) NOT NULL,
     -- composite key better implemented by assigning call_number as unique?
     CONSTRAINT CK_Book_author PRIMARY KEY (call_number, author_name),
-    CONSTRAINT FK_Book_author_Book_info FOREIGN KEY (call_number) 
+    CONSTRAINT FK_Book_author_Book_info FOREIGN KEY (call_number)
     	REFERENCES Book_info(call_number) ON DELETE CASCADE
 );
 
 create table Book_keyword(
     call_number char(20) NOT NULL,
-    keyword varchar(20) NOT NULL, 
+    keyword varchar(20) NOT NULL,
     CONSTRAINT CK_Book_keyword PRIMARY KEY (call_number, keyword),
-    CONSTRAINT FK_Book_keyword_Book_info FOREIGN KEY (call_number) 
+    CONSTRAINT FK_Book_keyword_Book_info FOREIGN KEY (call_number)
     	REFERENCES Book_info(call_number) ON DELETE CASCADE
 );
 
@@ -72,10 +73,10 @@ create table Checked_out(
 	borrower_id char(10) NOT NULL,
 	date_due date NOT NULL,
     CONSTRAINT CK_Checked_out PRIMARY KEY (call_number, copy_number),
-    CONSTRAINT FK_Checked_out_Book FOREIGN KEY (call_number, copy_number) 
+    CONSTRAINT FK_Checked_out_Book FOREIGN KEY (call_number, copy_number)
     	REFERENCES Book(call_number, copy_number) ON DELETE CASCADE,
-    CONSTRAINT FK_Checked_out_Borrower FOREIGN KEY (borrower_id) 
-    	REFERENCES Borrower(borrower_id) ON DELETE CASCADE
+    CONSTRAINT FK_Checked_out_Borrower FOREIGN KEY (borrower_id)
+    	REFERENCES Borrower(borrower_id)
 );
 
 create table Fine(
@@ -85,7 +86,7 @@ create table Fine(
 	date_returned date NOT NULL,
 	amount numeric(10,2) NOT NULL,
     CONSTRAINT CK_Fine PRIMARY KEY (borrower_id, title, date_due),
-    CONSTRAINT FK_Fine_Borrower FOREIGN KEY (borrower_id) 
+    CONSTRAINT FK_Fine_Borrower FOREIGN KEY (borrower_id)
     	REFERENCES Borrower(borrower_id) ON DELETE CASCADE
 );
 
