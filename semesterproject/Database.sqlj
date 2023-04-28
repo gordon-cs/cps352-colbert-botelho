@@ -139,10 +139,10 @@ public class Database
     public String getBorrowerName(String borrowerID) throws ErrorMessage
     {
 // IMPLEMENTED STUB (Implemented by EB)
-        String b_name = null;
+        String b_first, b_last, b_name = null;
         try {
-            #sql { SELECT *
-                   INTO :b_name
+            #sql { SELECT first_name, last_name
+                   INTO :b_first, :b_last
                    FROM Borrower WHERE borrower_id = :borrowerID };
             #sql { commit };
 
@@ -150,6 +150,7 @@ public class Database
             rollback();
         	throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
         }
+        b_name = b_first + ' ' + b_last;
         return b_name;
     }
 
@@ -169,9 +170,23 @@ public class Database
                              short copyNumber) throws ErrorMessage
     {
 // STUB
-        //these lines get date due I think?
+        //First we must figure out the borrower's check-out period
+        int b_checkout_period = 0;
+        try {
+            #sql { SELECT checkout_period
+                   into :b_checkout_period
+                   FROM Borrower JOIN Category ON Borrower.category_name =
+                   Category.category_name
+                   WHERE borrower_id = :borrowerID};
+            #sql { commit };
+        } catch(SQLException e) {
+            rollback();
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        }
+
+        //Now we get date due as current date + b_checkout_period
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DATE, 10);
+        calendar.add(Calendar.DATE, b_checkout_period);
         Date dateDue = new Date(calendar.getTime().getTime());
 
         try {
@@ -183,12 +198,9 @@ public class Database
             rollback();
             throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
         }
-
-        if (callNumber.equals("BAD")) {
-            throw new ErrorMessage("Error message test checkOutBook");
-        }
         System.out.println("Check out " + callNumber + " " +
             copyNumber + " to " + borrowerID);
+
         return dateDue;
     }
 
