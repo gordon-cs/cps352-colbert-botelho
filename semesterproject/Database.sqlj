@@ -198,9 +198,6 @@ public class Database
             rollback();
             throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
         }
-        System.out.println("Check out " + callNumber + " " +
-            copyNumber + " to " + borrowerID);
-
         return dateDue;
     }
 
