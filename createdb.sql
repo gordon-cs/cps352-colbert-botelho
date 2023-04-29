@@ -143,27 +143,24 @@ create trigger assess_fine_trigger
 	for each row
 	when (o.date_due < today)
         INSERT INTO Fine(borrower_id, title, date_due, date_returned, amount)
-        values (o.borrower_id,
-        (SELECT title
-        FROM Checked_out JOIN Book
-        ON Checked_out.call_number = Book.call_number
-        AND Checked_out.copy_number = Book.copy_number JOIN Book_info
-        ON Book.call_number = Book_info.call_number
-        WHERE Book_info.call_number = o.call_number),
+        values (o.borrower_id,'hard_wired_title',
         o.date_due, today,
-        ((fine_daily_rate_in_cents * (days(today) - days(o.date_due)))/100));
+        ((fine_daily_rate_in_cents * 0.01 * (days(today) - days(o.date_due)))));
 
 
-
---TEMPORARY!! DELETE BEFORE SUBMISSION!!
-
-INSERT INTO Category(category_name, checkout_period, max_books_out)
-values('TEST_CAT', 10, 100);
-
-INSERT INTO Borrower(borrower_id, last_name, first_name, category_name)
-values('123e', 'test_last', 'test_first', 'TEST_CAT');
-
-INSERT INTO Book_info(call_number, title, format)
-values('AAA', 'test_title', 'HC');
-
-INSERT INTO Book(call_number, copy_number) values('AAA', 1);
+--create trigger assess_fine_trigger
+ --   after delete on Checked_out
+--	referencing old as o
+--	for each row
+--	when (o.date_due < today)
+ --       INSERT INTO Fine(borrower_id, title, date_due, date_returned, amount)
+  --      values (o.borrower_id,
+ --       (SELECT title
+   --     FROM Checked_out JOIN Book
+ --       ON Checked_out.call_number = Book.call_number
+  --      AND Checked_out.copy_number = Book.copy_number JOIN Book_info
+  --      ON Book.call_number = Book_info.call_number
+  --      WHERE Book.call_number = o.call_number
+	--	AND Book.copy_number = o.copy_number),
+   --     o.date_due, today,
+  --      ((fine_daily_rate_in_cents * (days(today) - days(o.date_due)))/100));
