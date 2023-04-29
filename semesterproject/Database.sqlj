@@ -1122,7 +1122,7 @@ System.out.println("deleteBorrower(" + toString(information) + ") called");
      */
     public void payFine(String borrowerID, Fine fine) throws ErrorMessage
     {
-// STUB
+// IMPLEMENTED STUB (Implemented by EB)
         Date dateDue = fine.getDateDue();
         String book_title = fine.getValues()[0];
 
