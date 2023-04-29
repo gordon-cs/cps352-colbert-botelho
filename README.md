@@ -46,5 +46,28 @@ create trigger assess_fine_trigger
         ((fine_daily_rate_in_cents * 0.01 * (days(today) - days(o.date_due)))));
 
 
+! ----NOTE THE TESTS BELOW SHOULD BE RE-EXAMINED AFTER FINE TRIGGER WORKS
+! Borrower with multiple fines, where we only delete one
+AR e1117 MARTIN DEAN { 123-456-7890 098-765-4321 } VOCALIST
+AK AAF "Lambastion: The art of blistering retorts" { AARDVARK } CD { ORIGINAL }
+AK AAG "Weeping: How to booger cry with style" { AARDVARK } CD { ORIGINAL }
+C e1117 AAF 1
+C e1117 AAG 1
+!
+! Now we will change the date so that both books are late
++ 30
+! Then e1117 will to return them...
+R AAF 1
+!R AAG 1
+! Now lets look at e1117's fines
+G e1117
+!
+! Now we will pay just one of them
+!F e1117 "hard_wired_title" 2023-05-12
+!
+! Lets verify that only one of the fines was deleted
+G e1117
+
+
 
 

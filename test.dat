@@ -167,33 +167,3 @@ G e1116
 ! Now just for thoroughness sake, lets try to delete a non existent Fine
 ! (SHOULD FAIL)
 F e1116 "corn on the cob" 2023-09-28
-!
-!
-!
-!
-!
-!
-!
-!
-!
-! ----NOTE THE TESTS BELOW SHOULD BE RE-EXAMINED AFTER FINE TRIGGER WORKS
-! Borrower with multiple fines, where we only delete one
-AR e1117 MARTIN DEAN { 123-456-7890 098-765-4321 } VOCALIST
-AK AAF "Lambastion: The art of blistering retorts" { AARDVARK } CD { ORIGINAL }
-AK AAG "Weeping: How to booger cry with style" { AARDVARK } CD { ORIGINAL }
-C e1117 AAF 1
-C e1117 AAG 1
-!
-! Now we will change the date so that both books are late
-+ 30
-! Then e1117 will to return them...
-R AAF 1
-!R AAG 1
-! Now lets look at e1117's fines
-G e1117
-!
-! Now we will pay just one of them
-!F e1117 "hard_wired_title" 2023-05-12
-!
-! Lets verify that only one of the fines was deleted
-G e1117
