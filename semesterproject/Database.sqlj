@@ -173,7 +173,7 @@ public class Database
                              String callNumber,
                              short copyNumber) throws ErrorMessage
     {
-// STUB -- Implemented by EB
+// IMPLEMENTED STUB (Implemented by EB)
         //First we must figure out the borrower's check-out period
         int b_checkout_period = 0;
         try {
@@ -218,7 +218,7 @@ public class Database
      */
     public void returnBook(String callNumber, short copyNumber) throws ErrorMessage
     {
-// STUB
+// IMPLEMENTED STUB (Implemented by EB)
         //First we must get the date due to see if the book is overdue
         Date dateDue = null;
         try {
@@ -286,16 +286,6 @@ calendar.add(Calendar.DATE, 10);
 // this uses the copyNumber to facilitate testing - a book with a copy number
 // greater than 10 is considered late that many days.
 int daysLate = (copyNumber > 10) ? copyNumber : 0;
-
-// The following line should be incorporated into your code, to be executed
-// if the book is late (after calculating daysLate in the database, of course),
-
-        if (daysLate > 0)
-        {
-            rollback();
-            throw new ErrorMessage("Book is overdue " + daysLate +
-                " days and cannot be renewed");
-        }
 
 return new Date(calendar.getTime().getTime());
     }
@@ -1133,7 +1123,19 @@ System.out.println("deleteBorrower(" + toString(information) + ") called");
     public void payFine(String borrowerID, Fine fine) throws ErrorMessage
     {
 // STUB
-System.out.println("payFine() " + borrowerID + " " + fine.getAmountDue() + " called");
+        Date dateDue = fine.getDateDue();
+        String book_title = fine.getValues()[0];
+
+        try {
+            #sql { DELETE FROM Fine
+                    WHERE borrower_id = :borrowerID
+                    AND title = :book_title
+                    AND date_due = :dateDue };
+            #sql { commit };
+        } catch (SQLException e) {
+            rollback();
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        }
     }
 
     /* ************************************************************************
@@ -1590,7 +1592,8 @@ stream.println("Overdue Books report");
     private static final int DUPLICATE_KEY_SQL_ERROR = -803;
 
     private static final String BOOK_INFO_VALID_FORMAT_CONSTRAINT =
-        "~~~ YOU NEED TO FILL THIS IN ~~~";
+        "The format entered is not allowable. Allowable values for the " +
+        "format include: HC, SC, CD, MF, or PE.";
     private static final String BOOK_KEYWORD_VALID_KEYWORD_CONSTRAINT =
         "~~~ YOU NEED TO FILL THIS IN ~~~";
     private static final String BORROWER_CATEGORY_FOREIGN_CONSTRAINT =

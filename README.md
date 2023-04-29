@@ -11,3 +11,70 @@ db2 -t +p < ./database/cps352-colbert-botelho/dropdb.sql
 
 Helpful link for triggers:
 https://www.ibm.com/docs/en/db2-for-zos/11?topic=statements-create-trigger
+
+
+Notepad:
+         SELECT title
+		 FROM Checked_out JOIN Book
+		 ON Checked_out.call_number = Book.call_number
+		 AND Checked_out.copy_number = Book.copy_number
+		 JOIN Book_info
+		 ON Book.call_number = Book_info.call_number
+		 WHERE Book.call_number = 'AAC'
+		 AND Book.copy_number = 1;
+
+TEMP STORAGE ONE AT A TIME:
+create trigger assess_fine_trigger
+    after delete on Checked_out
+	referencing old as o
+	for each row
+	when (o.date_due < today)
+        INSERT INTO Fine(borrower_id, title, date_due, date_returned, amount)
+		values(o.borrower_id,'hard_wired_title', o.date_due, today,
+        ((fine_daily_rate_in_cents * 0.01 * (days(today) - days(o.date_due)))));
+
+
+MOST RECENT:
+create trigger assess_fine_trigger
+    after delete on Checked_out
+	referencing old as o
+	for each row
+	when (o.date_due < today)
+        INSERT INTO Fine(borrower_id, title, date_due, date_returned, amount)
+        values (o.borrower_id,
+		(SELECT title
+		 FROM Checked_out JOIN Book
+		 ON Checked_out.call_number = Book.call_number
+		 AND Checked_out.copy_number = Book.copy_number
+		 JOIN Book_info
+		 ON Book.call_number = Book_info.call_number
+		 WHERE Book.call_number = o.call_number
+		 AND Book.copy_number = o.copy_number
+		 FETCH FIRST 1 ROW ONLY),
+        o.date_due, today,
+        ((fine_daily_rate_in_cents * 0.01 * (days(today) - days(o.date_due)))));
+
+
+/*
+create trigger assess_fine_trigger
+    after delete on Checked_out
+	referencing old as o
+	for each row
+	when (o.date_due < today)
+        INSERT INTO Fine(borrower_id, title, date_due, date_returned, amount)
+        values (o.borrower_id,
+		(SELECT title
+		 FROM Checked_out JOIN Book
+		 ON Checked_out.call_number = Book.call_number
+		 AND Checked_out.copy_number = Book.copy_number
+		 JOIN Book_info
+		 ON Book.call_number = Book_info.call_number
+		 WHERE Book.call_number = o.call_number
+		 AND Book.copy_number = o.copy_number),
+        o.date_due, today,
+        ((fine_daily_rate_in_cents * 0.01 * (days(today) - days(o.date_due)))));
+*/
+
+
+
+
