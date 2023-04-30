@@ -167,3 +167,37 @@ G e1116
 ! Now just for thoroughness sake, lets try to delete a non existent Fine
 ! (SHOULD FAIL)
 F e1116 "corn on the cob" 2023-09-28
+!
+!
+!
+!
+! Basic RENEW BOOK tests----------------------------------------------------
+! Lets begin by adding a borrower, a book, and then checking it out
+#
+AC CELLIST 14 100
+AR e1117 MA YO-YO { 123-456-7890 098-765-4321 } CELLIST
+AK AAH "Frightened: Specifically of the dark" { ZEBRA } PE { WORDS }
+AK AAI "Karate" { ZEBRA } CD { WORDS }
+AK AAJ "Suffering from Success: An autobiography" { ZEBRA } HC { WORDS }
+C e1117 AAH 1
+!
+! Now we will increase the date by a few days (but remain < due date)
++ 10
+!
+! And now we will attempt to renew the book within the due date
+W AAH 1
+!
+! Now lets try renewing this same book again on the same day
+W AAH 1
+!
+!
+!
+! Now lets try renewing an overdue book
+C e1117 AAI 1
++ 20
+! this next line (SHOULD FAIL)
+W AAI 1
+!
+!
+! Now lets renew a book that we never checked out (SHOULD FAIL)
+W AAJ 1
