@@ -44,10 +44,17 @@ DC PEON
 !----------------START OF TEST SUITE----------------------
 
 ! Basic add borrower tests
+AC VOCALIST 14 100      ! add category for test
+AC GUITARIST 14 100     ! add category for test
 AR e1111 MCALPINE LIZZY { 123-456-7890 098-765-4321 } VOCALIST
 AR e1112 MAYER JOHN { 123-456-7890 098-765-4321 } GUITARIST
 AR e1113 PUTH CHARLIE { 123-456-7890 098-765-4321 } VOCALIST
 
 ! Testing primary key for borrower (second insert of Spurgeon should fail)
+AC WRITER 14 100         ! add category for test
+AC THEOLOGIAN 14 100     ! add category for test
 AR e1114 LEWIS C.S. { 123-456-7890 098-765-4321 } WRITER
 AR e1114 SPURGEON CHARLES { 123-456-7890 098-765-4321 } THEOLOGIAN
+
+! Adding borrower with category that doesn't exist
+AR e1115 JOBE KARI { 123-456-7890 098-765-4321 } WORSHIP_LEADER
