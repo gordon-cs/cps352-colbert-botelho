@@ -30,7 +30,7 @@ create table Book_info(
 	call_number char(20) PRIMARY KEY NOT NULL,
 	title char(50) NOT NULL,
 	format char(2) NOT NULL,
-	CONSTRAINT format_type CHECK (format IN ('HC, SC, CD, MF, PE'))
+	CONSTRAINT format_type CHECK (format IN ('HC', 'SC', 'CD', 'MF', 'PE'))
 );
 
 create table Book(
@@ -152,3 +152,18 @@ create trigger assess_fine_trigger
         WHERE Book_info.call_number = o.call_number),
         o.date_due, today,
         ((fine_daily_rate_in_cents * (days(today) - days(o.date_due)))/100));
+
+
+
+--TEMPORARY!! DELETE BEFORE SUBMISSION!!
+
+INSERT INTO Category(category_name, checkout_period, max_books_out)
+values('TEST_CAT', 10, 100);
+
+INSERT INTO Borrower(borrower_id, last_name, first_name, category_name)
+values('123e', 'test_last', 'test_first', 'TEST_CAT');
+
+INSERT INTO Book_info(call_number, title, format)
+values('AAA', 'test_title', 'HC');
+
+INSERT INTO Book(call_number, copy_number) values('AAA', 1);

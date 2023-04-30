@@ -40,21 +40,60 @@ PO
 DK AA.00 1
 DR 1234
 DC PEON
-
+!
 !----------------START OF TEST SUITE----------------------
-
-! Basic add borrower tests
-AC VOCALIST 14 100      ! add category for test
-AC GUITARIST 14 100     ! add category for test
+!
+! Basic add borrower tests---------------------------------------------------
+! first we must add categories for test
+AC VOCALIST 14 100
+AC GUITARIST 14 100
 AR e1111 MCALPINE LIZZY { 123-456-7890 098-765-4321 } VOCALIST
 AR e1112 MAYER JOHN { 123-456-7890 098-765-4321 } GUITARIST
 AR e1113 PUTH CHARLIE { 123-456-7890 098-765-4321 } VOCALIST
-
-! Testing primary key for borrower (second insert of Spurgeon should fail)
-AC WRITER 14 100         ! add category for test
-AC THEOLOGIAN 14 100     ! add category for test
+!
+! Testing primary key for borrower (second insert of Spurgeon SHOULD FAIL)
+! first we must add categories for test
+AC WRITER 14 100
+AC THEOLOGIAN 14 100
+! then we add duplicate borrower_ids
 AR e1114 LEWIS C.S. { 123-456-7890 098-765-4321 } WRITER
 AR e1114 SPURGEON CHARLES { 123-456-7890 098-765-4321 } THEOLOGIAN
-
-! Adding borrower with category that doesn't exist
-AR e1115 JOBE KARI { 123-456-7890 098-765-4321 } WORSHIP_LEADER
+!
+! Adding borrower with category that doesn't exist (SHOULD FAIL)
+AR e9999 JOBE KARI { 123-456-7890 098-765-4321 } WORSHIP_LEADER
+!
+!
+! Basic add book tests--------------------------------------------------------
+!
+AK AAB "Yummy" { AARDVARK ZEBRA } HC { ORIGINAL WORDS }
+!
+! Add three copies of same book
+AK AAC "Very Yummy" { AARDVARK ZEBRA } SC { ORIGINAL WORDS }
+AK AAC
+AK AAC
+!
+!
+! Basic checkout book tests----------------------------------------------------
+! Basic functionality of checkout
+C e1111 AAB 1
+!
+! Checkout different copies of same book
+C e1112 AAC 1
+C e1113 AAC 2
+!
+! Checkout same book to different people (SHOULD FAIL)
+C e1114 AAC 3
+C e1112 AAC 3
+!
+!
+! Checkout over borrower's max limit
+! First we must add the category with low limit of 1
+AC LOW_MAX 10 1
+! Then we add a borrower with that category
+AR e1115 KAHAN NOAH { 123-456-7890 098-765-4321 } LOW_MAX
+! Then we add two copies of the same book
+AK AAD "Insanely Yummy" { AARDVARK ZEBRA } MF { ORIGINAL WORDS }
+AK AAD
+! Finally we try to check out more than one book (SHOULD FAIL)
+C e1115 AAD 1
+C e1115 AAD 2
