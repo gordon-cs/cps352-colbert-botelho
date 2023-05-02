@@ -185,7 +185,11 @@ public class Database
             #sql { commit };
         } catch(SQLException e) {
             rollback();
-            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            if (e.getMessage().contains("no rows found for select into statement")) {
+                throw new ErrorMessage(NO_SUCH_BORROWER);
+            } else {
+                throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            }
         }
 
         //Now we get date due as current date + b_checkout_period
@@ -194,13 +198,19 @@ public class Database
         Date dateDue = new Date(calendar.getTime().getTime());
 
         try {
-            #sql {INSERT into Checked_out(
+            #sql { INSERT into Checked_out(
                 call_number, copy_number, borrower_id, date_due)
                 values (:callNumber, :copyNumber, :borrowerID, :dateDue)};
             #sql { commit };
         } catch(SQLException e) {
             rollback();
-            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            if (e.getMessage().contains("SQLERRMC=MAX_BOOKS_ALREADY_OUT")) {
+                throw new ErrorMessage(MAX_BOOKS_ALREADY_OUT_MSG);
+            } else if (e.getErrorCode() == DUPLICATE_KEY_SQL_ERROR) {
+                throw new ErrorMessage(DUPLICATE_ENTRY_ERROR);
+            } else {
+                throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            }
         }
         return dateDue;
     }
@@ -230,7 +240,11 @@ public class Database
             #sql { commit };
         } catch(SQLException e) {
             rollback();
-            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            if (e.getMessage().contains("no rows found for select into statement")) {
+                throw new ErrorMessage(NO_SUCH_BOOK + " in the Checked_out table.");
+            } else {
+                throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            }
         }
 
         // daysLate is then calculated from the checkout record in the database
@@ -289,7 +303,11 @@ public class Database
             #sql { commit };
         } catch(SQLException e) {
             rollback();
-            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            if (e.getMessage().contains("no rows found for select into statement")) {
+                throw new ErrorMessage(NO_SUCH_BOOK + " in the Checked_out table.");
+            } else {
+                throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            }
         }
 
         // Then we need to get the borrower's checkout period
@@ -306,7 +324,11 @@ public class Database
             #sql { commit };
         } catch(SQLException e) {
             rollback();
-            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            if (e.getMessage().contains("no rows found for select into statement")) {
+                throw new ErrorMessage(NO_SUCH_BORROWER);
+            } else {
+                throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            }
         }
 
         // Calculate the new due date
@@ -324,7 +346,11 @@ public class Database
             #sql { commit };
         } catch(SQLException e) {
             rollback();
-            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            if (e.getMessage().contains("CANT_RENEW_OVERDUE")) {
+                throw new ErrorMessage(CANT_RENEW_OVERDUE_MSG);
+            } else {
+                throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            }
         }
         return newDueDate;
     }
@@ -930,8 +956,13 @@ public class Database
 
         } catch(SQLException e) {
             rollback();
-
-            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            if (e.getErrorCode() == DUPLICATE_KEY_SQL_ERROR) {
+                throw new ErrorMessage(DUPLICATE_ENTRY_ERROR);
+            } else if (e.getErrorCode() == NON_EXISTENT_PARAMETER) {
+                throw new ErrorMessage(BORROWER_CATEGORY_FOREIGN_CONSTRAINT);
+            } else {
+                throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            }
         }
     }
 
@@ -1629,6 +1660,7 @@ stream.println("Overdue Books report");
     private static final int BAD_PASSWORD_SQL_ERROR = -1403;
     private static final String NO_ROW_SQL_STATE = "02000";
     private static final int DUPLICATE_KEY_SQL_ERROR = -803;
+    private static final int NON_EXISTENT_PARAMETER = -302;
 
     private static final String BOOK_INFO_VALID_FORMAT_CONSTRAINT =
         "The format entered is not allowable. Allowable values for the " +
@@ -1636,7 +1668,20 @@ stream.println("Overdue Books report");
     private static final String BOOK_KEYWORD_VALID_KEYWORD_CONSTRAINT =
         "~~~ YOU NEED TO FILL THIS IN ~~~";
     private static final String BORROWER_CATEGORY_FOREIGN_CONSTRAINT =
-        "~~~ YOU NEED TO FILL THIS IN ~~~";
+        "Sorry but the category entered for this borrower does not exist" +
+        " in the Categories table";
+    private static final String NO_SUCH_BOOK =
+        "Sorry, the book specified does not exist";
+    private static final String NO_SUCH_BORROWER =
+        "Sorry, the borrower specified does not exist";
+    private static final String CANT_RENEW_OVERDUE_MSG =
+        "Sorry this book is overdue and cannot be renewed";
+    private static final String DUPLICATE_ENTRY_ERROR =
+        "Sorry this row contains a duplicate of an existing value(s) in the table" +
+        " that is specified as unique or is the primary key.";
+    private static final String MAX_BOOKS_ALREADY_OUT_MSG =
+        "Sorry this borrower already has the maximum books checked out " +
+        "for their category.";
 
     private static final String BOOK_AUTHOR_TABLE_NAME = "BOOK_AUTHOR";
 
