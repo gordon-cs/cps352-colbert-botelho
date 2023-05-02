@@ -1195,7 +1195,27 @@ System.out.println("deleteBorrower(" + toString(information) + ") called");
 // IMPLEMENTED STUB (Implemented by EB)
         Date dateDue = fine.getDateDue();
         String book_title = fine.getValues()[0];
+        String rowExists = "";
 
+        // First we will verify that the row exists....
+        try {
+            #sql {  SELECT title
+                    INTO :rowExists
+                    FROM Fine
+                    WHERE borrower_id = :borrowerID
+                    AND title = :book_title
+                    AND date_due = :dateDue };
+            #sql { commit };
+        } catch (SQLException e) {
+            rollback();
+            if (e.getMessage().contains("no rows found for select into statement")) {
+                throw new ErrorMessage(NO_SUCH_FINE);
+            } else {
+                throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            }
+        }
+
+        // Now we will delete the row
         try {
             #sql { DELETE FROM Fine
                     WHERE borrower_id = :borrowerID
@@ -1682,6 +1702,8 @@ stream.println("Overdue Books report");
     private static final String MAX_BOOKS_ALREADY_OUT_MSG =
         "Sorry this borrower already has the maximum books checked out " +
         "for their category.";
+    private static final String NO_SUCH_FINE =
+        "Sorry, the fine you are attempting to pay does not exist.";
 
     private static final String BOOK_AUTHOR_TABLE_NAME = "BOOK_AUTHOR";
 

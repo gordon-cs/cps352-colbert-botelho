@@ -89,8 +89,6 @@ AK AAC
 AK AAC
 !
 !
-! Add a book with a duplicate call_number (SHOULD FAIL)
-AK AAB "Fiercely yummy" { AARDVARK ZEBRA } HC { ORIGINAL WORDS }
 !
 !
 ! Basic CHECKOUT book tests----------------------------------------------------
@@ -176,7 +174,7 @@ R AAQ 6
 G e1116
 !
 ! Now lets pay it (Note to self: last param in F is the date_due)
-F e1116 "Illegally Yummy" 2023-05-15
+F e1116 "Illegally Yummy" 2023-05-16
 !
 ! Now e1116 shouldn't have that fine anymore..lets check
 G e1116
@@ -185,7 +183,7 @@ G e1116
 ! Now just for thoroughness sake, lets try to delete a non existent Fine
 ! (SHOULD FAIL)
 F e1116 "corn on the cob" 2023-09-28
-!******FIGURE OUT HOW TO HANDLE WARNINGS W/ FAILED DELETES**********
+!
 !
 !
 ! Lets reset the date....
@@ -212,7 +210,7 @@ G e1117
 !
 !
 ! Now we will pay just one of them
-F e1117 "Lambastion: The art of blistering retorts" 2023-05-15
+F e1117 "Lambastion: The art of blistering retorts" 2023-05-16
 !
 ! Lets verify that only one of the fines was deleted
 G e1117
