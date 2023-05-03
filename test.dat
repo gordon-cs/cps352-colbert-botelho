@@ -77,6 +77,27 @@ AR e9999 JOBE KARI { 123-456-7890 098-765-4321 } WORSHIP_LEADER
 !
 !
 !
+! DELETE BORROWER TESTS---------------------------------------------------
+! Add dummy bororowers
+AR 10 A A { 1 } VOCALIST
+AR 11 B B { 2 3 } VOCALIST
+PR
+! Delete addded borrowers
+DR 10
+DR 11
+PR b
+! Delete borrower with book checked out (should fail)
+AR 12 C C { 4 } VOCALIST
+C 12 AAJ 10
+DR 12
+! Return Book and delete (should NOT fail)
+R AAJ 10
+DR 12
+! UPDATE BORROWER TESTS---------------------------------------------------
+AR 13 D D { 5 6 7 } VOCALIST
+PR
+ER 13 E E { 8 9 10 } GUITARIST
+PR
 ! Basic ADD BOOK tests--------------------------------------------------------
 !
 ! Basic adding of a book
