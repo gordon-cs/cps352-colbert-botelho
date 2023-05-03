@@ -173,7 +173,7 @@ public class Database
                              String callNumber,
                              short copyNumber) throws ErrorMessage
     {
-// STUB -- Implemented by EB
+// IMPLEMENTED STUB (Implemented by EB)
         //First we must figure out the borrower's check-out period
         int b_checkout_period = 0;
         try {
@@ -218,7 +218,7 @@ public class Database
      */
     public void returnBook(String callNumber, short copyNumber) throws ErrorMessage
     {
-// STUB
+// IMPLEMENTED STUB (Implemented by EB)
         //First we must get the date due to see if the book is overdue
         Date dateDue = null;
         try {
@@ -277,27 +277,56 @@ public class Database
      */
     public Date renewBook(String callNumber, short copyNumber) throws ErrorMessage
     {
-// STUB
-if (callNumber.equals("BAD")) throw new ErrorMessage("Error message test renewBook");
-System.out.println("Renew " + callNumber + " " + copyNumber);
-Calendar calendar = Calendar.getInstance();
-calendar.add(Calendar.DATE, 10);
-// Days late should be calculated from the checkout record in the database -
-// this uses the copyNumber to facilitate testing - a book with a copy number
-// greater than 10 is considered late that many days.
-int daysLate = (copyNumber > 10) ? copyNumber : 0;
-
-// The following line should be incorporated into your code, to be executed
-// if the book is late (after calculating daysLate in the database, of course),
-
-        if (daysLate > 0)
-        {
+// IMPLEMENTED STUB (Implemented by EB)
+        // First we must get the date due
+        Date dateDue = null;
+        try {
+            #sql {  SELECT date_due
+                    INTO :dateDue
+                    FROM Checked_out
+                    WHERE call_number = :callNumber AND
+                    copy_number = :copyNumber };
+            #sql { commit };
+        } catch(SQLException e) {
             rollback();
-            throw new ErrorMessage("Book is overdue " + daysLate +
-                " days and cannot be renewed");
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
         }
 
-return new Date(calendar.getTime().getTime());
+        // Then we need to get the borrower's checkout period
+        int b_checkout_period = 0;
+        try {
+            #sql { SELECT checkout_period
+                   into :b_checkout_period
+                   FROM Checked_out JOIN Borrower
+                   ON Checked_out.borrower_id = Borrower.borrower_id
+                   JOIN Category
+                   ON Borrower.category_name = Category.category_name
+                   WHERE call_number = :callNumber
+                   AND copy_number = :copyNumber};
+            #sql { commit };
+        } catch(SQLException e) {
+            rollback();
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        }
+
+        // Calculate the new due date
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(dateDue);
+        calendar.add(calendar.DATE, b_checkout_period);
+        Date newDueDate = new Date(calendar.getTime().getTime());
+
+        // Now we go ahead and renew the book in the database
+        try {
+            #sql {  UPDATE Checked_out
+                    SET (date_due) = :newDueDate
+                    WHERE call_number = :callNumber
+                    AND copy_number = :copyNumber };
+            #sql { commit };
+        } catch(SQLException e) {
+            rollback();
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        }
+        return newDueDate;
     }
 
     /* ************************************************************************
@@ -1132,8 +1161,20 @@ System.out.println("deleteBorrower(" + toString(information) + ") called");
      */
     public void payFine(String borrowerID, Fine fine) throws ErrorMessage
     {
-// STUB
-System.out.println("payFine() " + borrowerID + " " + fine.getAmountDue() + " called");
+// IMPLEMENTED STUB (Implemented by EB)
+        Date dateDue = fine.getDateDue();
+        String book_title = fine.getValues()[0];
+
+        try {
+            #sql { DELETE FROM Fine
+                    WHERE borrower_id = :borrowerID
+                    AND title = :book_title
+                    AND date_due = :dateDue };
+            #sql { commit };
+        } catch (SQLException e) {
+            rollback();
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        }
     }
 
     /* ************************************************************************
@@ -1590,7 +1631,8 @@ stream.println("Overdue Books report");
     private static final int DUPLICATE_KEY_SQL_ERROR = -803;
 
     private static final String BOOK_INFO_VALID_FORMAT_CONSTRAINT =
-        "~~~ YOU NEED TO FILL THIS IN ~~~";
+        "The format entered is not allowable. Allowable values for the " +
+        "format include: HC, SC, CD, MF, or PE.";
     private static final String BOOK_KEYWORD_VALID_KEYWORD_CONSTRAINT =
         "~~~ YOU NEED TO FILL THIS IN ~~~";
     private static final String BORROWER_CATEGORY_FOREIGN_CONSTRAINT =
