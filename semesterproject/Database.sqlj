@@ -19,6 +19,10 @@ import java.math.BigDecimal;
 import sqlj.runtime.*;
 import sqlj.runtime.ref.*;
 
+//Added these to calculate daysLate in return method
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+
 /**
  * This class manages access to the database for the CS352 Library project
  */
@@ -169,7 +173,7 @@ public class Database
                              String callNumber,
                              short copyNumber) throws ErrorMessage
     {
-// STUB
+// IMPLEMENTED STUB (Implemented by EB)
         //First we must figure out the borrower's check-out period
         int b_checkout_period = 0;
         try {
@@ -181,7 +185,11 @@ public class Database
             #sql { commit };
         } catch(SQLException e) {
             rollback();
-            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            if (e.getMessage().contains("no rows found for select into statement")) {
+                throw new ErrorMessage(NO_SUCH_BORROWER);
+            } else {
+                throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            }
         }
 
         //Now we get date due as current date + b_checkout_period
@@ -190,13 +198,19 @@ public class Database
         Date dateDue = new Date(calendar.getTime().getTime());
 
         try {
-            #sql {INSERT into Checked_out(
+            #sql { INSERT into Checked_out(
                 call_number, copy_number, borrower_id, date_due)
                 values (:callNumber, :copyNumber, :borrowerID, :dateDue)};
             #sql { commit };
         } catch(SQLException e) {
             rollback();
-            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            if (e.getMessage().contains("SQLERRMC=MAX_BOOKS_ALREADY_OUT")) {
+                throw new ErrorMessage(MAX_BOOKS_ALREADY_OUT_MSG);
+            } else if (e.getErrorCode() == DUPLICATE_KEY_SQL_ERROR) {
+                throw new ErrorMessage(DUPLICATE_ENTRY_ERROR);
+            } else {
+                throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            }
         }
         return dateDue;
     }
@@ -214,28 +228,55 @@ public class Database
      */
     public void returnBook(String callNumber, short copyNumber) throws ErrorMessage
     {
-// STUB
-if (callNumber.equals("BAD")) throw new ErrorMessage("Error message test returnBook");
-System.out.println("Return " + callNumber + " " + copyNumber);
-// Days late should be calculated from the checkout record in the database -
-// this uses the copyNumber to facilitate testing - a book with a copy number
-// greater than 10 is considered late that many days.
-int daysLate = (copyNumber > 10) ? copyNumber : 0;
+// IMPLEMENTED STUB (Implemented by EB)
+        //First we must get the date due to see if the book is overdue
+        Date dateDue = null;
+        try {
+            #sql {  SELECT date_due
+                    INTO :dateDue
+                    FROM Checked_out
+                    WHERE call_number = :callNumber AND
+                     copy_number = :copyNumber };
+            #sql { commit };
+        } catch(SQLException e) {
+            rollback();
+            if (e.getMessage().contains("no rows found for select into statement")) {
+                throw new ErrorMessage(NO_SUCH_BOOK + " in the Checked_out table.");
+            } else {
+                throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            }
+        }
 
-// The following line should be incorporated into your code, to be executed
-// if the book is late (after calculating daysLate in the database, of course),
-// and before inserting a new row into the Fine table.   It uses the symbolic
-// constant DAILY_FINE_RATE in class Fine - which gives the rate in cents,
-// whereas the Fine table in the database holds the amount in dollars.
+        // daysLate is then calculated from the checkout record in the database
+        // Get current date (SHOULD THIS BE SOME CONSTANT "TODAY"??)
+        Calendar calendar = Calendar.getInstance();
+        Date currentDate = new Date(calendar.getTime().getTime());
 
-        BigDecimal fineAmount = new BigDecimal(Fine.DAILY_FINE_RATE * .01 * daysLate).
+        // Convert dates to proper format for comparison, then calculate
+        long millisecondsLate = currentDate.getTime() - dateDue.getTime();
+        int daysLate = (int) (millisecondsLate / (1000 * 60 * 60 * 24));
+
+        // Delete the actual checked_out entry
+        try {
+            #sql {  DELETE FROM Checked_out
+                    WHERE call_number = :callNumber AND
+                        copy_number = :copyNumber };
+            #sql { commit };
+        } catch(SQLException e) {
+            rollback();
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        }
+
+        //If the book was late
+        if (daysLate > 0) {
+            // Calculate fine amount for the sake of displaying to the GUI
+            BigDecimal fineAmount =
+                new BigDecimal(Fine.DAILY_FINE_RATE * .01 * daysLate).
             setScale(2, BigDecimal.ROUND_HALF_UP);
 
-// Include the following at the very end of your code
-
-        if (daysLate > 0)
             throw new ErrorMessage("Book is overdue " + daysLate + " days " +
                 "- a fine of $" + fineAmount + " has been assessed");
+        }
     }
 
     /** Renew a book  If there is any problem, an appropriate error
@@ -250,27 +291,68 @@ int daysLate = (copyNumber > 10) ? copyNumber : 0;
      */
     public Date renewBook(String callNumber, short copyNumber) throws ErrorMessage
     {
-// STUB
-if (callNumber.equals("BAD")) throw new ErrorMessage("Error message test renewBook");
-System.out.println("Renew " + callNumber + " " + copyNumber);
-Calendar calendar = Calendar.getInstance();
-calendar.add(Calendar.DATE, 10);
-// Days late should be calculated from the checkout record in the database -
-// this uses the copyNumber to facilitate testing - a book with a copy number
-// greater than 10 is considered late that many days.
-int daysLate = (copyNumber > 10) ? copyNumber : 0;
-
-// The following line should be incorporated into your code, to be executed
-// if the book is late (after calculating daysLate in the database, of course),
-
-        if (daysLate > 0)
-        {
+// IMPLEMENTED STUB (Implemented by EB)
+        // First we must get the date due
+        Date dateDue = null;
+        try {
+            #sql {  SELECT date_due
+                    INTO :dateDue
+                    FROM Checked_out
+                    WHERE call_number = :callNumber AND
+                    copy_number = :copyNumber };
+            #sql { commit };
+        } catch(SQLException e) {
             rollback();
-            throw new ErrorMessage("Book is overdue " + daysLate +
-                " days and cannot be renewed");
+            if (e.getMessage().contains("no rows found for select into statement")) {
+                throw new ErrorMessage(NO_SUCH_BOOK + " in the Checked_out table.");
+            } else {
+                throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            }
         }
 
-return new Date(calendar.getTime().getTime());
+        // Then we need to get the borrower's checkout period
+        int b_checkout_period = 0;
+        try {
+            #sql { SELECT checkout_period
+                   into :b_checkout_period
+                   FROM Checked_out JOIN Borrower
+                   ON Checked_out.borrower_id = Borrower.borrower_id
+                   JOIN Category
+                   ON Borrower.category_name = Category.category_name
+                   WHERE call_number = :callNumber
+                   AND copy_number = :copyNumber};
+            #sql { commit };
+        } catch(SQLException e) {
+            rollback();
+            if (e.getMessage().contains("no rows found for select into statement")) {
+                throw new ErrorMessage(NO_SUCH_BORROWER);
+            } else {
+                throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            }
+        }
+
+        // Calculate the new due date
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(dateDue);
+        calendar.add(calendar.DATE, b_checkout_period);
+        Date newDueDate = new Date(calendar.getTime().getTime());
+
+        // Now we go ahead and renew the book in the database
+        try {
+            #sql {  UPDATE Checked_out
+                    SET (date_due) = :newDueDate
+                    WHERE call_number = :callNumber
+                    AND copy_number = :copyNumber };
+            #sql { commit };
+        } catch(SQLException e) {
+            rollback();
+            if (e.getMessage().contains("CANT_RENEW_OVERDUE")) {
+                throw new ErrorMessage(CANT_RENEW_OVERDUE_MSG);
+            } else {
+                throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            }
+        }
+        return newDueDate;
     }
 
     /* ************************************************************************
@@ -874,8 +956,13 @@ return new Date(calendar.getTime().getTime());
 
         } catch(SQLException e) {
             rollback();
-
-            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            if (e.getErrorCode() == DUPLICATE_KEY_SQL_ERROR) {
+                throw new ErrorMessage(DUPLICATE_ENTRY_ERROR);
+            } else if (e.getErrorCode() == NON_EXISTENT_PARAMETER) {
+                throw new ErrorMessage(BORROWER_CATEGORY_FOREIGN_CONSTRAINT);
+            } else {
+                throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            }
         }
     }
 
@@ -1146,8 +1233,40 @@ return new Date(calendar.getTime().getTime());
      */
     public void payFine(String borrowerID, Fine fine) throws ErrorMessage
     {
-// STUB
-System.out.println("payFine() " + borrowerID + " " + fine.getAmountDue() + " called");
+// IMPLEMENTED STUB (Implemented by EB)
+        Date dateDue = fine.getDateDue();
+        String book_title = fine.getValues()[0];
+        String rowExists = "";
+
+        // First we will verify that the row exists....
+        try {
+            #sql {  SELECT title
+                    INTO :rowExists
+                    FROM Fine
+                    WHERE borrower_id = :borrowerID
+                    AND title = :book_title
+                    AND date_due = :dateDue };
+            #sql { commit };
+        } catch (SQLException e) {
+            rollback();
+            if (e.getMessage().contains("no rows found for select into statement")) {
+                throw new ErrorMessage(NO_SUCH_FINE);
+            } else {
+                throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            }
+        }
+
+        // Now we will delete the row
+        try {
+            #sql { DELETE FROM Fine
+                    WHERE borrower_id = :borrowerID
+                    AND title = :book_title
+                    AND date_due = :dateDue };
+            #sql { commit };
+        } catch (SQLException e) {
+            rollback();
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        }
     }
 
     /* ************************************************************************
@@ -1603,13 +1722,31 @@ stream.println("Overdue Books report");
     private static final String NO_ROW_SQL_STATE = "02000";
     private static final int DUPLICATE_KEY_SQL_ERROR = -803;
     private static final String CANT_DELETE_BORROWER_WITH_BOOK_CHECKED_OUT = "70001";
+    private static final int NON_EXISTENT_PARAMETER = -302;
 
     private static final String BOOK_INFO_VALID_FORMAT_CONSTRAINT =
-        "~~~ YOU NEED TO FILL THIS IN ~~~";
+        "The format entered is not allowable. Allowable values for the " +
+        "format include: HC, SC, CD, MF, or PE.";
     private static final String BOOK_KEYWORD_VALID_KEYWORD_CONSTRAINT =
         "~~~ YOU NEED TO FILL THIS IN ~~~";
     private static final String BORROWER_CATEGORY_FOREIGN_CONSTRAINT =
         "FK_Borrower_Category";
+        "Sorry but the category entered for this borrower does not exist" +
+        " in the Categories table";
+    private static final String NO_SUCH_BOOK =
+        "Sorry, the book specified does not exist";
+    private static final String NO_SUCH_BORROWER =
+        "Sorry, the borrower specified does not exist";
+    private static final String CANT_RENEW_OVERDUE_MSG =
+        "Sorry this book is overdue and cannot be renewed";
+    private static final String DUPLICATE_ENTRY_ERROR =
+        "Sorry this row contains a duplicate of an existing value(s) in the table" +
+        " that is specified as unique or is the primary key.";
+    private static final String MAX_BOOKS_ALREADY_OUT_MSG =
+        "Sorry this borrower already has the maximum books checked out " +
+        "for their category.";
+    private static final String NO_SUCH_FINE =
+        "Sorry, the fine you are attempting to pay does not exist.";
 
     private static final String BOOK_AUTHOR_TABLE_NAME = "BOOK_AUTHOR";
 

@@ -11,3 +11,7 @@ db2 -t +p < ./database/cps352-colbert-botelho/dropdb.sql
 
 Helpful link for triggers:
 https://www.ibm.com/docs/en/db2-for-zos/11?topic=statements-create-trigger
+
+
+
+
