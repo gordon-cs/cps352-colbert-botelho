@@ -1386,17 +1386,39 @@ public class Database
      *  @exception an ErrorMessage is thrown if there is an unexpected error
      *             accessing the database.
      */
+    #sql iterator KeywordReportCursor(String, String, String);
     public void keywordsReport(PrintStream stream) throws ErrorMessage
     {
-// STUB
-            String [] BOOKS_KEYWORD_REPORT_HEADINGS =
-                { "Keyword", "Call Number", "Title" };
-            int [] BOOKS_KEYWORD_REPORT_COLUMN_WIDTHS =
-                { 22, 22, 50 };
-            boolean [] BOOKS_KEYWORD_REPORT_REPEAT_COLUMNS =
-                { false, false, false };
-stream.println("Book Keywords report");
+        // STUB (Implemented by JC)
+        try {
+          KeywordReportCursor cursor;
+          #sql cursor = { select keyword, book_keyword.call_number, title
+                          from book_keyword
+                          join
+                          book_info
+                          on book_keyword.call_number = book_info.call_number
+                          order by keyword, book_keyword.call_number
+                          };
+
+          String [] BOOKS_KEYWORD_REPORT_HEADINGS = { "Keyword", "Call Number", "Title" };
+          int [] BOOKS_KEYWORD_REPORT_COLUMN_WIDTHS = { 22, 22, 50 };
+          boolean [] BOOKS_KEYWORD_REPORT_REPEAT_COLUMNS = { false, false, false };
+
+        produceReport(stream,
+                      "Book Keywords Report",
+                      BOOKS_KEYWORD_REPORT_HEADINGS,
+                      BOOKS_KEYWORD_REPORT_COLUMN_WIDTHS,
+                      BOOKS_KEYWORD_REPORT_REPEAT_COLUMNS,
+                      cursor.getResultSet());
+        cursor.close();
+
+        } catch(SQLException e) {
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        } finally {
+            rollback();
+        }
     }
+
 
     /** Produce a list of all categories - name, max books out, checkout period
      *
@@ -1462,7 +1484,8 @@ stream.println("Book Keywords report");
                             from borrower
                             join
                             borrower_phone
-                            on borrower.borrower_id = borrower_phone.borrower_id};
+                            on borrower.borrower_id = borrower_phone.borrower_id
+                            order by borrower_phone.borrower_id};
 
             String [] BORROWERS_REPORT_HEADINGS =
                   { "Borrower ID", "Last Name", "First Name", "Phone #", "Category" };
@@ -1498,17 +1521,49 @@ stream.println("Book Keywords report");
      *  @exception an ErrorMessage is thrown if there is an unexpected error
      *             accessing the database.
      */
+    #sql iterator FinesReportCursor(String, String, String, float);
     public void finesReport(PrintStream stream) throws ErrorMessage
     {
-// STUB
+        // STUB IMPLEMENTED BY JC
+        try
+        {
+            FinesReportCursor cursor;
+
+            #sql cursor = { select last_name, first_name, phone, sum(amount)
+              from fine
+              join borrower
+              on fine.borrower_id = borrower.borrower_id
+              join borrower_phone
+              on fine.borrower_id = borrower_phone.borrower_id
+              group by last_name, first_name, phone
+              order by sum(amount) desc };
+
             String [] FINES_REPORT_HEADINGS =
                 { "Last Name", "First Name", "Phone #", "Total Fines" };
             int [] FINES_REPORT_COLUMN_WIDTHS =
                 { 22, 22, 22, 11 };
             boolean [] FINES_REPORT_REPEAT_COLUMNS =
                 { true, true, false, true };
-stream.println("Fines report");
+
+            produceReport(stream,
+                          "Fines Report",
+                          FINES_REPORT_HEADINGS,
+                          FINES_REPORT_COLUMN_WIDTHS,
+                          FINES_REPORT_REPEAT_COLUMNS,
+                          cursor.getResultSet());
+            cursor.close();
+
+        }
+        catch(SQLException e)
+        {
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        }
+        finally
+        {
+            rollback();
+        }
     }
+
 
     /** Produce a list of all overdue books - borrower name,
      *  title(s) of overdue books with due date for each.
@@ -1518,17 +1573,47 @@ stream.println("Fines report");
      *  @exception an ErrorMessage is thrown if there is an unexpected error
      *             accessing the database.
      */
+    #sql iterator OverdueReportCursor(String, String, String, String);
     public void overdueBooksReport(PrintStream stream) throws ErrorMessage
     {
-// STUB
+        // STUB IMPLEMENTED BY JC
+        try
+        {
+            OverdueReportCursor cursor;
+
+            #sql cursor = { select last_name, first_name, title, date_due
+                            from fine
+                            join 
+                            borrower
+                            on fine.borrower_id = borrower.borrower_id
+                            order by last_name, first_name, date_due };
+
             String [] OVERDUE_BOOKS_REPORT_HEADINGS =
                 { "Last Name", "First Name", "Title", "Date Due" };
             int [] OVERDUE_BOOKS_REPORT_COLUMN_WIDTHS =
                 { 22, 22, 52, 10 };
             boolean [] OVERDUE_BOOKS_REPORT_REPEAT_COLUMNS =
                 { true, true, false, false };
-stream.println("Overdue Books report");
+
+            produceReport(stream,
+                          "Overdue Books Report",
+                          OVERDUE_BOOKS_REPORT_HEADINGS,
+                          OVERDUE_BOOKS_REPORT_COLUMN_WIDTHS,
+                          OVERDUE_BOOKS_REPORT_REPEAT_COLUMNS,
+                          cursor.getResultSet());
+            cursor.close();
+
+        }
+        catch(SQLException e)
+        {
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        }
+        finally
+        {
+            rollback();
+        }
     }
+
 
     /* ************************************************************************
      * Utility methods
