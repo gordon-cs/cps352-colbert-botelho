@@ -1055,27 +1055,27 @@ public class Database
             #sql { UPDATE Borrower
             SET last_name = :newLastName, first_name = :newFirstName, category_name = :newCategory
             WHERE borrower_id = :borrowerID
-        };
-
-        // Remove old list of phones
-
-        #sql { DELETE FROM Borrower_phone
-            WHERE borrower_id = :borrowerID
-        };
-
-        // Insert new list of phones
-
-        Iterator newPhonesIterator = newPhones.iterator();
-
-        while(newPhonesIterator.hasNext())
-        {
-            String newPhone = (String) newPhonesIterator.next();
-            #sql { INSERT INTO Borrower_phone
-                   VALUES(:borrowerID, :newPhone)
             };
-        }
 
-        #sql { commit };
+            // Remove old list of phones
+
+            #sql { DELETE FROM Borrower_phone
+                WHERE borrower_id = :borrowerID
+            };
+
+            // Insert new list of phones
+
+            Iterator newPhonesIterator = newPhones.iterator();
+
+            while(newPhonesIterator.hasNext())
+            {
+                String newPhone = (String) newPhonesIterator.next();
+                #sql { INSERT INTO Borrower_phone
+                      VALUES(:borrowerID, :newPhone)
+                };
+            }
+
+            #sql { commit };
         }
         catch(SQLException e) {
             rollback();
@@ -1731,8 +1731,6 @@ stream.println("Overdue Books report");
         "~~~ YOU NEED TO FILL THIS IN ~~~";
     private static final String BORROWER_CATEGORY_FOREIGN_CONSTRAINT =
         "FK_Borrower_Category";
-        "Sorry but the category entered for this borrower does not exist" +
-        " in the Categories table";
     private static final String NO_SUCH_BOOK =
         "Sorry, the book specified does not exist";
     private static final String NO_SUCH_BORROWER =
