@@ -19,6 +19,10 @@ import java.math.BigDecimal;
 import sqlj.runtime.*;
 import sqlj.runtime.ref.*;
 
+//Added these to calculate daysLate in return method
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+
 /**
  * This class manages access to the database for the CS352 Library project
  */
@@ -169,7 +173,7 @@ public class Database
                              String callNumber,
                              short copyNumber) throws ErrorMessage
     {
-// STUB
+// STUB -- Implemented by EB
         //First we must figure out the borrower's check-out period
         int b_checkout_period = 0;
         try {
@@ -215,27 +219,50 @@ public class Database
     public void returnBook(String callNumber, short copyNumber) throws ErrorMessage
     {
 // STUB
-if (callNumber.equals("BAD")) throw new ErrorMessage("Error message test returnBook");
-System.out.println("Return " + callNumber + " " + copyNumber);
-// Days late should be calculated from the checkout record in the database -
-// this uses the copyNumber to facilitate testing - a book with a copy number
-// greater than 10 is considered late that many days.
-int daysLate = (copyNumber > 10) ? copyNumber : 0;
+        //First we must get the date due to see if the book is overdue
+        Date dateDue = null;
+        try {
+            #sql {  SELECT date_due
+                    INTO :dateDue
+                    FROM Checked_out
+                    WHERE call_number = :callNumber AND
+                     copy_number = :copyNumber };
+            #sql { commit };
+        } catch(SQLException e) {
+            rollback();
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        }
 
-// The following line should be incorporated into your code, to be executed
-// if the book is late (after calculating daysLate in the database, of course),
-// and before inserting a new row into the Fine table.   It uses the symbolic
-// constant DAILY_FINE_RATE in class Fine - which gives the rate in cents,
-// whereas the Fine table in the database holds the amount in dollars.
+        // daysLate is then calculated from the checkout record in the database
+        // Get current date (SHOULD THIS BE SOME CONSTANT "TODAY"??)
+        Calendar calendar = Calendar.getInstance();
+        Date currentDate = new Date(calendar.getTime().getTime());
 
-        BigDecimal fineAmount = new BigDecimal(Fine.DAILY_FINE_RATE * .01 * daysLate).
+        // Convert dates to proper format for comparison, then calculate
+        long millisecondsLate = currentDate.getTime() - dateDue.getTime();
+        int daysLate = (int) (millisecondsLate / (1000 * 60 * 60 * 24));
+
+        // Delete the actual checked_out entry
+        try {
+            #sql {  DELETE FROM Checked_out
+                    WHERE call_number = :callNumber AND
+                        copy_number = :copyNumber };
+            #sql { commit };
+        } catch(SQLException e) {
+            rollback();
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        }
+
+        //If the book was late
+        if (daysLate > 0) {
+            // Calculate fine amount for the sake of displaying to the GUI
+            BigDecimal fineAmount =
+                new BigDecimal(Fine.DAILY_FINE_RATE * .01 * daysLate).
             setScale(2, BigDecimal.ROUND_HALF_UP);
 
-// Include the following at the very end of your code
-
-        if (daysLate > 0)
             throw new ErrorMessage("Book is overdue " + daysLate + " days " +
                 "- a fine of $" + fineAmount + " has been assessed");
+        }
     }
 
     /** Renew a book  If there is any problem, an appropriate error

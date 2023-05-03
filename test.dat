@@ -1,6 +1,6 @@
 ! Example of a testing file.   THESE ARE FAR FROM SUFFICIENT TESTS!
 ! STUDENTS: BE SURE THE FILE YOU TURN IN TESTS EVERYTHING
-! STUDENTS: PUT YOUR NAME(S) HERE
+! STUDENTS: Eddy Botelho and Jake Colbert
 !
 ! Delete pre-existing data
 #
@@ -42,30 +42,37 @@ DR 1234
 DC PEON
 !
 !----------------START OF TEST SUITE----------------------
+! Delete pre-existing data and reset date to today
+#
 !
-! Basic add borrower tests---------------------------------------------------
-! first we must add categories for test
+!
+! Basic ADD BORROWER tests---------------------------------------------------
+! first we must add categories and borrowers to use in test
 AC VOCALIST 14 100
 AC GUITARIST 14 100
+AC WRITER 14 100
+AC THEOLOGIAN 14 100
 AR e1111 MCALPINE LIZZY { 123-456-7890 098-765-4321 } VOCALIST
 AR e1112 MAYER JOHN { 123-456-7890 098-765-4321 } GUITARIST
 AR e1113 PUTH CHARLIE { 123-456-7890 098-765-4321 } VOCALIST
 !
-! Testing primary key for borrower (second insert of Spurgeon SHOULD FAIL)
-! first we must add categories for test
-AC WRITER 14 100
-AC THEOLOGIAN 14 100
-! then we add duplicate borrower_ids
+!
+!
+! Testing primary key for borrower
+! Add duplicate borrower_ids (SHOULD FAIL)
 AR e1114 LEWIS C.S. { 123-456-7890 098-765-4321 } WRITER
 AR e1114 SPURGEON CHARLES { 123-456-7890 098-765-4321 } THEOLOGIAN
+!
 !
 ! Adding borrower with category that doesn't exist (SHOULD FAIL)
 AR e9999 JOBE KARI { 123-456-7890 098-765-4321 } WORSHIP_LEADER
 !
 !
-! Basic add book tests--------------------------------------------------------
+! Basic ADD BOOK tests--------------------------------------------------------
 !
+! Basic adding of a book
 AK AAB "Yummy" { AARDVARK ZEBRA } HC { ORIGINAL WORDS }
+!
 !
 ! Add three copies of same book
 AK AAC "Very Yummy" { AARDVARK ZEBRA } SC { ORIGINAL WORDS }
@@ -73,27 +80,73 @@ AK AAC
 AK AAC
 !
 !
-! Basic checkout book tests----------------------------------------------------
+! Basic CHECKOUT book tests----------------------------------------------------
 ! Basic functionality of checkout
 C e1111 AAB 1
+!
 !
 ! Checkout different copies of same book
 C e1112 AAC 1
 C e1113 AAC 2
+!
 !
 ! Checkout same book to different people (SHOULD FAIL)
 C e1114 AAC 3
 C e1112 AAC 3
 !
 !
+!
 ! Checkout over borrower's max limit
 ! First we must add the category with low limit of 1
 AC LOW_MAX 10 1
+!
 ! Then we add a borrower with that category
 AR e1115 KAHAN NOAH { 123-456-7890 098-765-4321 } LOW_MAX
+!
 ! Then we add two copies of the same book
 AK AAD "Insanely Yummy" { AARDVARK ZEBRA } MF { ORIGINAL WORDS }
 AK AAD
+!
 ! Finally we try to check out more than one book (SHOULD FAIL)
 C e1115 AAD 1
 C e1115 AAD 2
+!
+!
+! Basic RETURN book tests----------------------------------------------------
+! First add borrower to use for tests, category reused from addBorrower tests
+AR e1116 ELLINGTON DUKE { 123-456-7890 098-765-4321 } VOCALIST
+!
+! Now we add a few copies of a book to use for tests
+AK AAE "Illegally Yummy" { AARDVARK ZEBRA } CD { ORIGINAL WORDS }
+AK AAE
+AK AAE
+!
+! Check out the book to our newly created borrower
+C e1116 AAE 1
+!
+! Now attempt a basic return (no fine)
+R AAE 1
+!
+! Verify that no fine was incurred (should produce exception: no fines)
+G e1116
+!
+!
+! Now lets checkout a different copy and attempt an overdue return
+C e1116 AAE 2
+!
+! Diddle with the date so that return is overdue
++ 30
+!
+! Now try overdue return (fine should be incurred)
+R AAE 2
+!
+! Lets check if a fine was actually incurred
+G e1116
+!
+!
+! Now try to return book twice (aka a book that isn't checked_out) (SHOULD FAIL)
+R AAE 1
+!
+!
+! Now lets return a book that doesn't exist (SHOULD FAIL)
+R AAQ 6
