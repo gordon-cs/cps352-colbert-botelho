@@ -1075,9 +1075,41 @@ System.out.println("updateBorrower(" + toString(information) + ") called");
     public void deleteBorrower(String borrowerID) throws ErrorMessage
     {
 // STUB
-Object [] information = new Object[1];
-information[0] = borrowerID;
-System.out.println("deleteBorrower(" + toString(information) + ") called");
+        // Make sure borrower exists
+        String borrowerExists = "";
+        try
+        {
+            #sql {  SELECT first_name
+                    INTO :borrowerExists
+                    FROM Borrower
+                    WHERE borrower_id = :borrowerID
+                };
+
+            #sql { commit };
+        }
+        catch(SQLException e)
+        {
+            rollback();
+            if (e.getMessage().contains("no rows found for select into statement")) {
+                throw new ErrorMessage(NO_SUCH_BORROWER + "in the Borrower table.");
+            } else {
+                throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+            }
+        }
+        // Actually delete borrower
+        try
+        {
+            #sql {  DELETE from Borrower
+                    WHERE borrower_id = :borrowerID
+                };
+
+            #sql { commit };
+        }
+        catch(SQLException e)
+        {
+            rollback();
+            throw new ErrorMessage("Unexpected SQL error " + e.getMessage());
+        }
     }
 
     /* ************************************************************************

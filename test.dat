@@ -251,3 +251,10 @@ W AAI 1
 !
 ! Now lets renew a book that we never checked out (SHOULD FAIL)
 W AAJ 1
+!
+!
+! Basic DELETE BORROWER tests---------------------------------------------------
+! TEST OF DELETE BORROWER --EB
+AR e1118 WORK PLEASE { 123-456-7890 098-765-4321 } CELLIST
+AR e1119 WORKING IS_THIS { 123-456-7890 098-765-4321 } CELLIST
+DR e1118
