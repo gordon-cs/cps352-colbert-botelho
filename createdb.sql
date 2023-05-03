@@ -143,5 +143,9 @@ create trigger assess_fine_trigger
 	for each row
 	when (o.date_due < today)
         INSERT INTO Fine(borrower_id, title, date_due, date_returned, amount)
-		values(o.borrower_id,'hard_wired_title', o.date_due, today,
+        values (o.borrower_id,
+		(SELECT title
+		 FROM Book_info b
+		 WHERE o.call_number = b.call_number),
+        o.date_due, today,
         ((fine_daily_rate_in_cents * 0.01 * (days(today) - days(o.date_due)))));

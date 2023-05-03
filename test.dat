@@ -41,6 +41,14 @@ DK AA.00 1
 DR 1234
 DC PEON
 !
+!
+!
+!
+!
+!
+!
+!
+!
 !----------------START OF TEST SUITE----------------------
 ! Delete pre-existing data and reset date to today
 #
@@ -58,14 +66,15 @@ AR e1113 PUTH CHARLIE { 123-456-7890 098-765-4321 } VOCALIST
 !
 !
 !
-! Testing primary key for borrower
-! Add duplicate borrower_ids (SHOULD FAIL)
+! To test the primary key for borrower, lets add duplicate borrower_ids (SHOULD FAIL)
 AR e1114 LEWIS C.S. { 123-456-7890 098-765-4321 } WRITER
 AR e1114 SPURGEON CHARLES { 123-456-7890 098-765-4321 } THEOLOGIAN
 !
 !
 ! Adding borrower with category that doesn't exist (SHOULD FAIL)
 AR e9999 JOBE KARI { 123-456-7890 098-765-4321 } WORSHIP_LEADER
+!
+!
 !
 !
 ! Basic ADD BOOK tests--------------------------------------------------------
@@ -78,6 +87,8 @@ AK AAB "Yummy" { AARDVARK ZEBRA } HC { ORIGINAL WORDS }
 AK AAC "Very Yummy" { AARDVARK ZEBRA } SC { ORIGINAL WORDS }
 AK AAC
 AK AAC
+!
+!
 !
 !
 ! Basic CHECKOUT book tests----------------------------------------------------
@@ -112,6 +123,9 @@ C e1115 AAD 1
 C e1115 AAD 2
 !
 !
+!
+!
+!
 ! Basic RETURN book tests----------------------------------------------------
 ! First add borrower to use for tests, category reused from addBorrower tests
 AR e1116 ELLINGTON DUKE { 123-456-7890 098-765-4321 } VOCALIST
@@ -144,7 +158,7 @@ R AAE 2
 G e1116
 !
 !
-! Now try to return book twice (aka a book that isn't checked_out) (SHOULD FAIL)
+! Now lets try to return book that isn't checked_out (SHOULD FAIL)
 R AAE 1
 !
 !
@@ -153,13 +167,15 @@ R AAQ 6
 !
 !
 !
+!
 ! Basic PAY FINE tests----------------------------------------------------
 !
 ! Lets attempt pay off that fine that borrower e1116 accrued in the last test
-! Here is the fine...
 G e1116
+!
 ! Now lets pay it (Note to self: last param in F is the date_due)
-F e1116 "hard_wired_title" 2023-05-13
+F e1116 "Illegally Yummy" 2023-05-16
+!
 ! Now e1116 shouldn't have that fine anymore..lets check
 G e1116
 !
@@ -167,6 +183,38 @@ G e1116
 ! Now just for thoroughness sake, lets try to delete a non existent Fine
 ! (SHOULD FAIL)
 F e1116 "corn on the cob" 2023-09-28
+!
+!
+!
+! Lets reset the date....
+#
+!
+! Borrower with multiple fines, where we only delete one
+AC VOCALIST 14 100
+AR e1117 MARTIN DEAN { 123-456-7890 098-765-4321 } VOCALIST
+AK AAF "Lambastion: The art of blistering retorts" { AARDVARK } CD { ORIGINAL }
+AK AAG "Weeping: How to booger cry with style" { AARDVARK } CD { ORIGINAL }
+!
+C e1117 AAF 1
+C e1117 AAG 1
+!
+! Now we will change the date so that both books are late
++ 30
+!
+! Then e1117 will to return them...
+R AAF 1
+R AAG 1
+!
+! Now lets look at e1117's fines
+G e1117
+!
+!
+! Now we will pay just one of them
+F e1117 "Lambastion: The art of blistering retorts" 2023-05-16
+!
+! Lets verify that only one of the fines was deleted
+G e1117
+!
 !
 !
 !
@@ -195,7 +243,9 @@ W AAH 1
 ! Now lets try renewing an overdue book
 C e1117 AAI 1
 + 20
-! this next line (SHOULD FAIL)
+!
+!
+! This next line (SHOULD FAIL)
 W AAI 1
 !
 !
